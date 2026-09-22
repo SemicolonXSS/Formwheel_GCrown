@@ -29,7 +29,7 @@ body{
   padding-bottom:40px;
 }
 
-button,input,select{
+button,input{
   font:inherit;
 }
 
@@ -167,7 +167,7 @@ button{
   flex-wrap:wrap;
 }
 
-input,select{
+input{
   height:48px;
   border:1px solid #dfe1e8;
   border-radius:13px;
@@ -177,7 +177,7 @@ input,select{
   min-width:0;
 }
 
-input:focus,select:focus{
+input:focus{
   border-color:#555b6d;
   box-shadow:0 0 0 3px rgba(80,85,100,.08);
 }
@@ -249,83 +249,6 @@ input:focus,select:focus{
 .player-slot.filled{
   border-style:solid;
   background:#f7f8fc;
-}
-
-/* =========================
-   SETTINGS / PREP SCREEN
-========================= */
-
-.settings-block{
-  margin-top:18px;
-  padding-top:18px;
-  border-top:1px solid #ececf1;
-}
-
-.settings-title{
-  font-size:15px;
-  font-weight:900;
-  margin:0 0 4px;
-}
-
-.settings-desc{
-  font-size:12px;
-  color:#8a8e99;
-  margin:0 0 14px;
-}
-
-.settings-grid{
-  display:grid;
-  grid-template-columns:repeat(2,1fr);
-  gap:14px;
-}
-
-.field{
-  display:flex;
-  flex-direction:column;
-  gap:6px;
-}
-
-.field label{
-  font-size:12px;
-  font-weight:800;
-  color:#777b87;
-}
-
-.toggle-group{
-  display:flex;
-  flex-wrap:wrap;
-  gap:10px;
-  margin-top:4px;
-}
-
-.toggle-chip{
-  display:flex;
-  align-items:center;
-  gap:7px;
-  padding:10px 14px;
-  border:1px solid #dfe1e8;
-  border-radius:999px;
-  font-size:13px;
-  font-weight:700;
-  background:#fff;
-  cursor:pointer;
-}
-
-.toggle-chip input{
-  width:15px;
-  height:15px;
-}
-
-.settings-note{
-  font-size:12px;
-  color:#8a8e99;
-  margin-top:10px;
-}
-
-fieldset.settings-fieldset{
-  border:0;
-  margin:0;
-  padding:0;
 }
 
 .game-layout{
@@ -516,6 +439,12 @@ fieldset.settings-fieldset{
   visibility:hidden;
 }
 
+.mode-select{display:flex;gap:10px;flex-wrap:wrap;margin:12px 0 4px;}
+.mode-option{flex:1;min-width:150px;border:1px solid #dfe1e8;background:#fff;border-radius:14px;padding:14px;cursor:pointer;text-align:left;}
+.mode-option.selected{border:2px solid #171923;background:#f6f7fa;}
+.mode-option strong{display:block;margin-bottom:4px;}
+.mode-option span{font-size:12px;color:#777b87;line-height:1.4;}
+.mode-badge{display:inline-block;margin-top:8px;padding:5px 9px;border-radius:999px;background:#eef0f5;font-size:12px;font-weight:800;}
 .info{
   padding:12px;
   border-radius:13px;
@@ -731,10 +660,6 @@ fieldset.settings-fieldset{
     padding:18px;
   }
 
-  .settings-grid{
-    grid-template-columns:1fr;
-  }
-
   .board{
     gap:3px;
     padding:3px;
@@ -784,7 +709,7 @@ fieldset.settings-fieldset{
         <h2>Solo</h2>
         <p>
           AI 플레이어들과 왕관을 놓고 경쟁하세요.
-          난이도와 보드를 직접 설정할 수 있어요.
+          점수 모드 또는 탈취 모드를 선택해 AI와 경쟁합니다.
         </p>
       </div>
 
@@ -802,12 +727,12 @@ fieldset.settings-fieldset{
   </section>
 
 
-  <!-- SOLO SETUP / 준비 화면 -->
+  <!-- SOLO SETUP -->
   <section id="soloSetupScreen" class="screen">
 
     <div class="hero">
-      <h1>🧍 Solo 게임 준비</h1>
-      <p>닉네임과 게임 설정을 정하고 왕관 쟁탈전을 시작하세요.</p>
+      <h1>🧍 Solo</h1>
+      <p>AI와 왕관 쟁탈전을 시작하세요.</p>
     </div>
 
     <div class="card">
@@ -816,78 +741,25 @@ fieldset.settings-fieldset{
 
       <div class="form-row">
         <input id="soloName" maxlength="12" placeholder="닉네임">
-
-        <div class="field" style="min-width:140px">
-          <label for="soloDifficulty">AI 난이도</label>
-          <select id="soloDifficulty">
-            <option value="easy">쉬움</option>
-            <option value="normal" selected>보통</option>
-            <option value="hard">어려움</option>
-          </select>
-        </div>
-      </div>
-
-      <fieldset class="settings-fieldset settings-block">
-
-        <legend class="settings-title">⚙️ 게임 설정</legend>
-        <p class="settings-desc">판 크기, 행동 횟수, 특수 칸과 특수 룰을 자유롭게 조정하세요.</p>
-
-        <div class="settings-grid">
-
-          <div class="field">
-            <label for="soloBoardSize">보드 크기</label>
-            <select id="soloBoardSize">
-              <option value="5" selected>5 x 5</option>
-              <option value="6">6 x 6</option>
-              <option value="7">7 x 7</option>
-            </select>
-          </div>
-
-          <div class="field">
-            <label for="soloMaxActions">플레이어당 행동 횟수</label>
-            <input id="soloMaxActions" type="number" min="10" max="100" step="5" value="30">
-          </div>
-
-        </div>
-
-        <div class="field" style="margin-top:14px">
-          <label>사용할 특수 칸</label>
-          <div class="toggle-group">
-            <label class="toggle-chip">
-              <input type="checkbox" id="soloTileBonus" checked> 💰 보너스
-            </label>
-            <label class="toggle-chip">
-              <input type="checkbox" id="soloTileTrap" checked> 🕳️ 함정
-            </label>
-            <label class="toggle-chip">
-              <input type="checkbox" id="soloTileTeleport" checked> 🌀 순간이동
-            </label>
-            <label class="toggle-chip">
-              <input type="checkbox" id="soloTileDefense" checked> 🛡️ 방어
-            </label>
-          </div>
-        </div>
-
-        <div class="field" style="margin-top:14px">
-          <label>특수 룰</label>
-          <div class="toggle-group">
-            <label class="toggle-chip">
-              <input type="checkbox" id="soloRulePunishSteal"> ⚔️ 탈취 페널티 (뺏기면 -1점)
-            </label>
-          </div>
-        </div>
-
-      </fieldset>
-
-      <div class="form-row" style="margin-top:18px">
         <button class="primary" onclick="startSolo()">게임 시작</button>
         <button class="secondary" onclick="backMenu()">뒤로</button>
       </div>
 
       <br>
 
+      <h2 class="section-title">게임 모드</h2>
+      <div class="mode-select">
+        <button type="button" id="soloScoreMode" class="mode-option selected" onclick="selectSoloMode('score')">
+          <strong>🏆 점수 모드</strong>
+          <span>현재 시스템 그대로. 왕관 보유자는 턴 종료마다 +1점.</span>
+        </button>
+        <button type="button" id="soloStealMode" class="mode-option" onclick="selectSoloMode('steal')">
+          <strong>👑 탈취 모드</strong>
+          <span>모든 행동이 끝났을 때 마지막으로 왕관을 가진 사람이 승리.</span>
+        </button>
+      </div>
       <div class="info">
-        👑 왕관을 가지고 자신의 턴을 끝내면 <b>+1점</b>.<br>
+        🛡️ <b>방어 타일</b>에 올라가면 방어막을 얻습니다. 방어막이 있는 동안 왕관 탈취를 한 번 막고, 막은 뒤 방어막은 사라집니다.<br>
         🚶 한 턴에는 최대 <b>한 칸</b> 이동합니다.<br>
         ⚔️ 왕관 보유자와 인접하면 왕관을 빼앗을 수 있습니다.
       </div>
@@ -915,6 +787,17 @@ fieldset.settings-fieldset{
 
       <br>
 
+      <h2 class="section-title">게임 모드 <span class="small">방장이 선택합니다</span></h2>
+      <div class="mode-select">
+        <button type="button" id="battleScoreMode" class="mode-option selected" onclick="selectBattleMode('score')">
+          <strong>🏆 점수 모드</strong>
+          <span>왕관 보유자는 턴 종료마다 +1점, 최종 점수가 높은 플레이어가 승리.</span>
+        </button>
+        <button type="button" id="battleStealMode" class="mode-option" onclick="selectBattleMode('steal')">
+          <strong>👑 탈취 모드</strong>
+          <span>게임 종료 순간 왕관을 가진 플레이어가 승리.</span>
+        </button>
+      </div>
       <div class="form-row">
         <button class="primary" onclick="createRoom()">방 만들기</button>
         <input id="joinCode" maxlength="4" inputmode="numeric" placeholder="4자리 코드">
@@ -947,66 +830,11 @@ fieldset.settings-fieldset{
       <div class="small">ROOM CODE</div>
 
       <div id="roomCodeDisplay" class="room-code">----</div>
+      <div id="lobbyMode" class="mode-badge">🏆 점수 모드</div>
 
       <div class="players-list" id="playersList"></div>
 
-      <fieldset class="settings-fieldset settings-block">
-
-        <legend class="settings-title">⚙️ 게임 설정</legend>
-        <p class="settings-desc" id="battleSettingsDesc">방장만 설정을 변경할 수 있습니다.</p>
-
-        <div class="settings-grid">
-
-          <div class="field">
-            <label for="battleBoardSize">보드 크기</label>
-            <select id="battleBoardSize" disabled>
-              <option value="5">5 x 5</option>
-              <option value="6">6 x 6</option>
-              <option value="7">7 x 7</option>
-            </select>
-          </div>
-
-          <div class="field">
-            <label for="battleMaxActions">플레이어당 행동 횟수</label>
-            <input id="battleMaxActions" type="number" min="10" max="100" step="5" disabled>
-          </div>
-
-        </div>
-
-        <div class="field" style="margin-top:14px">
-          <label>사용할 특수 칸</label>
-          <div class="toggle-group">
-            <label class="toggle-chip">
-              <input type="checkbox" id="battleTileBonus" disabled> 💰 보너스
-            </label>
-            <label class="toggle-chip">
-              <input type="checkbox" id="battleTileTrap" disabled> 🕳️ 함정
-            </label>
-            <label class="toggle-chip">
-              <input type="checkbox" id="battleTileTeleport" disabled> 🌀 순간이동
-            </label>
-            <label class="toggle-chip">
-              <input type="checkbox" id="battleTileDefense" disabled> 🛡️ 방어
-            </label>
-          </div>
-        </div>
-
-        <div class="field" style="margin-top:14px">
-          <label>특수 룰</label>
-          <div class="toggle-group">
-            <label class="toggle-chip">
-              <input type="checkbox" id="battleRulePunishSteal" disabled> ⚔️ 탈취 페널티 (뺏기면 -1점)
-            </label>
-          </div>
-        </div>
-
-        <div class="form-row hidden" id="battleSaveSettingsRow" style="margin-top:14px">
-          <button class="secondary" id="battleSaveSettingsBtn" onclick="saveBattleSettings()">설정 저장</button>
-        </div>
-
-      </fieldset>
-
-      <div class="form-row" style="margin-top:18px">
+      <div class="form-row">
         <button class="primary hidden" id="startBattleBtn" onclick="startBattle()">
           게임 시작
         </button>
@@ -1036,7 +864,7 @@ fieldset.settings-fieldset{
           <div>
             <div id="turnLabel" class="turn-label">🔵 Player</div>
             <div id="turnNumber" class="turn-number">
-              TURN 1
+              TURN 1 / 120 · ACTION 0 / 30
             </div>
           </div>
 
@@ -1185,19 +1013,8 @@ const db = getDatabase(app);
    CONSTANTS
 ========================= */
 
-const DEFAULT_BOARD_SIZE = 5;
-const DEFAULT_MAX_ACTIONS = 30;
-const DEFAULT_TILE_TOGGLES = { bonus:true, trap:true, teleport:true, defense:true };
-const DEFAULT_SPECIAL_RULES = { punishSteal:false };
-
-/*
-  왕관을 아무도 갖고 있지 않은 상태를 나타내는 값.
-  Firebase Realtime Database는 null 필드를 저장 시 아예 지워버리기 때문에
-  (읽어보면 undefined가 됨), null 대신 -1을 "보유자 없음" 값으로 사용한다.
-  예전에는 이 값을 null로 썼는데, Battle 모드에서 방을 생성/전송하는 과정에서
-  null이 삭제되어 버려 "왕관이 사라지는" 버그의 원인이었다.
-*/
-const NO_HOLDER = -1;
+const SIZE = 5;
+const MAX_ACTIONS_PER_PLAYER = 30;
 
 const COLORS = [
   "🔵",
@@ -1205,6 +1022,14 @@ const COLORS = [
   "🟢",
   "🟣"
 ];
+
+const TILE_TYPES = {
+  normal:"normal",
+  bonus:"bonus",
+  defense:"defense",
+  teleport:"teleport",
+  trap:"trap"
+};
 
 
 /* =========================
@@ -1219,6 +1044,8 @@ let localPlayerId = null;
 let isHost = false;
 
 let soloState = null;
+let soloGameMode = "score";
+let battleGameMode = "score";
 let lastCrownSnapshot = null;
 
 
@@ -1280,120 +1107,25 @@ function toast(message){
 
 
 /* =========================
-   SETTINGS HELPERS
+   BOARD
 ========================= */
 
-function clamp(n,min,max){
-  return Math.min(max,Math.max(min,n));
-}
+const specialTiles = {
 
-function defaultSettings(){
-  return {
-    boardSize:DEFAULT_BOARD_SIZE,
-    maxActions:DEFAULT_MAX_ACTIONS,
-    tiles:{ ...DEFAULT_TILE_TOGGLES },
-    specialRules:{ ...DEFAULT_SPECIAL_RULES }
-  };
-}
+  "2,0":"bonus",
+  "0,2":"defense",
+  "4,2":"teleport",
+  "2,4":"bonus",
+  "1,3":"trap",
+  "3,1":"trap",
+  "0,4":"teleport",
+  "4,0":"defense"
 
-function normalizeSettings(raw){
-  const s = raw || {};
-  return {
-    boardSize: clamp(Number(s.boardSize) || DEFAULT_BOARD_SIZE, 5, 7),
-    maxActions: clamp(Number(s.maxActions) || DEFAULT_MAX_ACTIONS, 10, 100),
-    tiles: { ...DEFAULT_TILE_TOGGLES, ...(s.tiles || {}) },
-    specialRules: { ...DEFAULT_SPECIAL_RULES, ...(s.specialRules || {}) }
-  };
-}
+};
 
-function readSettingsForm(prefix){
-  return {
-    boardSize: Number(document.getElementById(`${prefix}BoardSize`).value) || DEFAULT_BOARD_SIZE,
-    maxActions: clamp(
-      Number(document.getElementById(`${prefix}MaxActions`).value) || DEFAULT_MAX_ACTIONS,
-      10, 100
-    ),
-    tiles: {
-      bonus: document.getElementById(`${prefix}TileBonus`).checked,
-      trap: document.getElementById(`${prefix}TileTrap`).checked,
-      teleport: document.getElementById(`${prefix}TileTeleport`).checked,
-      defense: document.getElementById(`${prefix}TileDefense`).checked
-    },
-    specialRules: {
-      punishSteal: document.getElementById(`${prefix}RulePunishSteal`).checked
-    }
-  };
-}
+function getTile(x,y){
 
-function applySettingsToForm(prefix,settings){
-
-  const s = normalizeSettings(settings);
-
-  const boardSizeEl = document.getElementById(`${prefix}BoardSize`);
-  const maxActionsEl = document.getElementById(`${prefix}MaxActions`);
-  const bonusEl = document.getElementById(`${prefix}TileBonus`);
-  const trapEl = document.getElementById(`${prefix}TileTrap`);
-  const teleportEl = document.getElementById(`${prefix}TileTeleport`);
-  const defenseEl = document.getElementById(`${prefix}TileDefense`);
-  const punishEl = document.getElementById(`${prefix}RulePunishSteal`);
-
-  if(boardSizeEl) boardSizeEl.value = String(s.boardSize);
-  if(maxActionsEl) maxActionsEl.value = String(s.maxActions);
-  if(bonusEl) bonusEl.checked = !!s.tiles.bonus;
-  if(trapEl) trapEl.checked = !!s.tiles.trap;
-  if(teleportEl) teleportEl.checked = !!s.tiles.teleport;
-  if(defenseEl) defenseEl.checked = !!s.tiles.defense;
-  if(punishEl) punishEl.checked = !!s.specialRules.punishSteal;
-}
-
-
-/* =========================
-   BOARD / TILES
-========================= */
-
-function generateSpecialTiles(size){
-
-  const mid = Math.floor(size/2);
-  const last = size-1;
-  const map = {};
-
-  map[`${mid},0`] = "bonus";
-  map[`${mid},${last}`] = "bonus";
-  map[`0,${mid}`] = "defense";
-  map[`${last},0`] = "defense";
-  map[`${last},${mid}`] = "teleport";
-  map[`0,${last}`] = "teleport";
-
-  if(last-1>=1){
-    map[`1,${last-1}`] = "trap";
-    map[`${last-1},1`] = "trap";
-  }
-
-  return map;
-}
-
-function filterSpecialTiles(map,toggles){
-
-  const result = {};
-
-  Object.entries(map).forEach(([key,type])=>{
-    if(toggles[type]!==false){
-      result[key]=type;
-    }
-  });
-
-  return result;
-}
-
-function buildTilesMap(settings){
-  return filterSpecialTiles(
-    generateSpecialTiles(settings.boardSize),
-    settings.tiles
-  );
-}
-
-function getTile(x,y,tilesMap){
-  return (tilesMap && tilesMap[`${x},${y}`]) || "normal";
+  return specialTiles[`${x},${y}`] || "normal";
 }
 
 function tileEmoji(type){
@@ -1406,29 +1138,18 @@ function tileEmoji(type){
   return "";
 }
 
-function computeTeleportPortals(tilesMap){
-  return Object.entries(tilesMap)
-    .filter(([,type])=>type==="teleport")
-    .map(([key])=>{
-      const [x,y] = key.split(",").map(Number);
-      return {x,y};
-    });
-}
-
 
 /* =========================
    RANDOM POSITIONS
 ========================= */
 
-function startingPositions(count,size){
-
-  const last = size-1;
+function startingPositions(count){
 
   const positions = [
     {x:0,y:0},
-    {x:last,y:last},
-    {x:last,y:0},
-    {x:0,y:last}
+    {x:4,y:4},
+    {x:4,y:0},
+    {x:0,y:4}
   ];
 
   return positions.slice(0,count);
@@ -1436,49 +1157,20 @@ function startingPositions(count,size){
 
 
 /* =========================
-   SHARED GAME STATE BUILDER
-========================= */
-
-function createGameState(settings,playerDefs){
-
-  const s = normalizeSettings(settings);
-  const tilesMap = buildTilesMap(s);
-  const mid = Math.floor(s.boardSize/2);
-  const positions = startingPositions(playerDefs.length,s.boardSize);
-
-  return {
-
-    started:true,
-    turn:0,
-
-    boardSize:s.boardSize,
-    maxActions:s.maxActions,
-    tilesMap,
-    specialRules:s.specialRules,
-
-    currentPlayer:0,
-
-    crownHolder:NO_HOLDER,
-    crownX:mid,
-    crownY:mid,
-
-    players: playerDefs.map((def,i)=>({
-      id:def.id,
-      name:def.name,
-      x:positions[i].x,
-      y:positions[i].y,
-      score:0,
-      actions:0,
-      alive:true
-    }))
-
-  };
-}
-
-
-/* =========================
    SOLO
 ========================= */
+
+window.selectSoloMode = (modeValue) => {
+  soloGameMode = modeValue === "steal" ? "steal" : "score";
+  document.getElementById("soloScoreMode").classList.toggle("selected", soloGameMode === "score");
+  document.getElementById("soloStealMode").classList.toggle("selected", soloGameMode === "steal");
+};
+
+window.selectBattleMode = (modeValue) => {
+  battleGameMode = modeValue === "steal" ? "steal" : "score";
+  document.getElementById("battleScoreMode").classList.toggle("selected", battleGameMode === "score");
+  document.getElementById("battleStealMode").classList.toggle("selected", battleGameMode === "steal");
+};
 
 window.startSolo = () => {
 
@@ -1489,21 +1181,76 @@ window.startSolo = () => {
     name = "Player";
   }
 
-  const settings = readSettingsForm("solo");
-  const difficulty = document.getElementById("soloDifficulty").value || "normal";
-
   mode = "solo";
   lastCrownSnapshot = null;
 
-  const playerDefs = [
-    { id:"p0", name:name },
-    { id:"p1", name:"AI Red" },
-    { id:"p2", name:"AI Green" },
-    { id:"p3", name:"AI Purple" }
-  ];
+  const positions = startingPositions(4);
 
-  soloState = createGameState(settings,playerDefs);
-  soloState.aiDifficulty = difficulty;
+  soloState = {
+
+    started:true,
+
+    turn:0,
+
+    maxActions:MAX_ACTIONS_PER_PLAYER,
+    gameMode:soloGameMode,
+
+    currentPlayer:0,
+
+    crownHolder:null,
+
+    crownX:2,
+    crownY:2,
+
+    players:[
+
+      {
+        id:"p0",
+        name:name,
+        x:positions[0].x,
+        y:positions[0].y,
+        score:0,
+        actions:0,
+        shield:false,
+        alive:true
+      },
+
+      {
+        id:"p1",
+        name:"AI Red",
+        x:positions[1].x,
+        y:positions[1].y,
+        score:0,
+        actions:0,
+        shield:false,
+        alive:true
+      },
+
+      {
+        id:"p2",
+        name:"AI Green",
+        x:positions[2].x,
+        y:positions[2].y,
+        score:0,
+        actions:0,
+        shield:false,
+        alive:true
+      },
+
+      {
+        id:"p3",
+        name:"AI Purple",
+        x:positions[3].x,
+        y:positions[3].y,
+        score:0,
+        actions:0,
+        shield:false,
+        alive:true
+      }
+
+    ]
+
+  };
 
   showScreen("gameScreen");
   renderGame(soloState);
@@ -1550,7 +1297,7 @@ function soloMove(dx,dy){
   const nx = player.x + dx;
   const ny = player.y + dy;
 
-  if(!inside(nx,ny,state.boardSize)){
+  if(!inside(nx,ny)){
     toast("이동할 수 없습니다.");
     return;
   }
@@ -1588,109 +1335,6 @@ function soloMove(dx,dy){
    AI
 ========================= */
 
-const AI_DIFFICULTY_CONFIG = {
-  easy:   { randomness:0.55, trapAvoidance:0.3, flee:false },
-  normal: { randomness:0.2,  trapAvoidance:0.7, flee:true  },
-  hard:   { randomness:0.0,  trapAvoidance:1.0, flee:true  }
-};
-
-function pickRandom(arr){
-  return arr[Math.floor(Math.random()*arr.length)];
-}
-
-function nearestOpponent(state,index){
-
-  const me = state.players[index];
-  let best = null;
-  let bestDist = Infinity;
-
-  state.players.forEach((p,i)=>{
-    if(i===index) return;
-    const d = Math.abs(p.x-me.x)+Math.abs(p.y-me.y);
-    if(d<bestDist){
-      bestDist = d;
-      best = p;
-    }
-  });
-
-  return best;
-}
-
-function chooseAiMove(state,aiIndex){
-
-  const ai = state.players[aiIndex];
-  const difficulty = state.aiDifficulty || "normal";
-  const config = AI_DIFFICULTY_CONFIG[difficulty] || AI_DIFFICULTY_CONFIG.normal;
-
-  const directions = [[1,0],[-1,0],[0,1],[0,-1]];
-
-  const candidates = directions
-    .map(([dx,dy])=>({dx,dy,nx:ai.x+dx,ny:ai.y+dy}))
-    .filter(c =>
-      inside(c.nx,c.ny,state.boardSize) &&
-      !isOccupiedByOther(state.players,aiIndex,c.nx,c.ny)
-    );
-
-  if(candidates.length===0) return null;
-
-  /* 쉬움 난이도는 종종 완전히 무작위로 움직이는 실수를 함 */
-  if(Math.random() < config.randomness){
-    return pickRandom(candidates);
-  }
-
-  let goal = null;
-  let fleeing = false;
-
-  if(state.crownHolder===aiIndex){
-
-    if(config.flee){
-      const nearest = nearestOpponent(state,aiIndex);
-      if(nearest){
-        fleeing = true;
-        goal = { x:nearest.x, y:nearest.y };
-      }
-    }
-
-  }else if(state.crownHolder===NO_HOLDER){
-
-    goal = { x:state.crownX, y:state.crownY };
-
-  }else{
-
-    const holder = state.players[state.crownHolder];
-    if(holder){
-      goal = { x:holder.x, y:holder.y };
-    }
-
-  }
-
-  const scored = candidates.map(c=>{
-
-    let score = 0;
-
-    if(goal){
-      const curDist = Math.abs(ai.x-goal.x)+Math.abs(ai.y-goal.y);
-      const newDist = Math.abs(c.nx-goal.x)+Math.abs(c.ny-goal.y);
-      score += fleeing ? (newDist-curDist)*3 : (curDist-newDist)*3;
-    }
-
-    const type = getTile(c.nx,c.ny,state.tilesMap);
-
-    if(type==="bonus") score += 2;
-    if(type==="trap") score -= 4*config.trapAvoidance;
-    if(type==="teleport" && difficulty==="hard" && !fleeing) score += 1;
-
-    score += Math.random()*0.5;
-
-    return { ...c, score };
-
-  });
-
-  scored.sort((a,b)=>b.score-a.score);
-
-  return scored[0];
-}
-
 function aiTurn(){
 
   const state = soloState;
@@ -1702,12 +1346,59 @@ function aiTurn(){
   if(index===0) return;
 
   const ai = state.players[index];
-  const move = chooseAiMove(state,index);
 
-  if(move){
+  let options = [
+    [1,0],
+    [-1,0],
+    [0,1],
+    [0,-1]
+  ];
 
-    ai.x = move.nx;
-    ai.y = move.ny;
+  options = options
+    .sort(()=>Math.random()-.5)
+    .filter(([dx,dy])=>{
+
+      const nx = ai.x + dx;
+      const ny = ai.y + dy;
+
+      return inside(nx,ny) &&
+        !isOccupiedByOther(state.players,index,nx,ny);
+
+    });
+
+  if(options.length){
+
+    let chosen = options[0];
+
+    if(state.crownHolder!==index){
+
+      const target = state.players[state.crownHolder];
+
+      if(target){
+
+        const toward = options.find(([dx,dy])=>{
+
+          const nx=ai.x+dx;
+          const ny=ai.y+dy;
+
+          return Math.abs(nx-target.x)+
+                 Math.abs(ny-target.y)
+                 <
+                 Math.abs(ai.x-target.x)+
+                 Math.abs(ai.y-target.y);
+
+        });
+
+        if(toward){
+          chosen=toward;
+        }
+
+      }
+
+    }
+
+    ai.x += chosen[0];
+    ai.y += chosen[1];
 
     applyTileEffect(state,ai);
 
@@ -1750,31 +1441,29 @@ function finishTurn(state){
 
   if(!player) return;
 
-  const maxActions = state.maxActions || DEFAULT_MAX_ACTIONS;
-
   /*
     왕관을 가진 플레이어가
     자신의 턴을 끝냈을 때 +1
   */
-  if(state.crownHolder===previous){
+  if(state.gameMode === "score" && state.crownHolder===previous){
     player.score += 1;
   }
 
-  /* 모든 플레이어는 정확히 maxActions 번의 행동 기회를 가짐 */
+  /* 모든 플레이어는 정확히 30번의 행동 기회를 가짐 */
   player.actions = Math.min(
-    maxActions,
+    MAX_ACTIONS_PER_PLAYER,
     Number(player.actions || 0) + 1
   );
 
   state.turn++;
 
-  /* 아직 행동 횟수를 채우지 않은 다음 플레이어에게 턴 전달 */
+  /* 아직 30회를 채우지 않은 다음 플레이어에게 턴 전달 */
   let next = (previous + 1) % state.players.length;
   let checked = 0;
 
   while(
     checked < state.players.length &&
-    Number(state.players[next].actions || 0) >= maxActions
+    Number(state.players[next].actions || 0) >= MAX_ACTIONS_PER_PLAYER
   ){
     next = (next + 1) % state.players.length;
     checked++;
@@ -1784,10 +1473,9 @@ function finishTurn(state){
 }
 
 function isGameFinished(state){
-  const maxActions = state.maxActions || DEFAULT_MAX_ACTIONS;
   return state.players.length > 0 &&
     state.players.every(
-      p => Number(p.actions || 0) >= maxActions
+      p => Number(p.actions || 0) >= MAX_ACTIONS_PER_PLAYER
     );
 }
 
@@ -1805,7 +1493,7 @@ function checkCrown(state,player){
   if(
     player.x===state.crownX &&
     player.y===state.crownY &&
-    (state.crownHolder===NO_HOLDER || state.crownHolder===index)
+    (state.crownHolder===null || state.crownHolder===index)
   ){
     if(state.crownHolder !== index){
       state.crownHolder = index;
@@ -1816,7 +1504,7 @@ function checkCrown(state,player){
 
   /* 왕관 보유자와 상하좌우로 바로 붙으면 탈취 */
   if(
-    state.crownHolder!==NO_HOLDER &&
+    state.crownHolder!==null &&
     state.crownHolder!==index
   ){
     const holder = state.players[state.crownHolder];
@@ -1827,11 +1515,11 @@ function checkCrown(state,player){
       Math.abs(player.y-holder.y);
 
     if(distance===1){
-
-      if(state.specialRules && state.specialRules.punishSteal){
-        holder.score = Math.max(0, holder.score-1);
+      if(holder.shield){
+        holder.shield=false;
+        toast(`🛡️ ${holder.name}의 방어막이 탈취를 막았습니다!`);
+        return;
       }
-
       state.crownHolder=index;
       toast(`⚔️ ${player.name}이(가) 왕관을 탈취!`);
     }
@@ -1847,7 +1535,7 @@ function checkCrown(state,player){
 function applyTileEffect(state,player){
 
   const type =
-    getTile(player.x,player.y,state.tilesMap);
+    getTile(player.x,player.y);
 
   if(type==="bonus"){
 
@@ -1868,13 +1556,17 @@ function applyTileEffect(state,player){
 
   if(type==="defense"){
 
-    toast("🛡️ 방어 칸");
+    player.shield = true;
+    toast("🛡️ 방어막 획득! 다음 왕관 탈취를 1회 방어합니다.");
 
   }
 
   if(type==="teleport"){
 
-    const portals = computeTeleportPortals(state.tilesMap);
+    const portals = [
+      {x:0,y:4},
+      {x:4,y:0}
+    ];
 
     const target =
       portals.find(p =>
@@ -1900,12 +1592,12 @@ function applyTileEffect(state,player){
    HELPERS
 ========================= */
 
-function inside(x,y,size){
+function inside(x,y){
 
   return x>=0 &&
-         x<size &&
+         x<SIZE &&
          y>=0 &&
-         y<size;
+         y<SIZE;
 
 }
 
@@ -1940,33 +1632,27 @@ function renderGame(state){
       `${COLORS[state.currentPlayer]} ${current.name}의 턴`;
   }
 
-  const maxActions = state.maxActions || DEFAULT_MAX_ACTIONS;
-  const totalActions = state.players.length * maxActions;
-
+  const totalActions = state.players.length * MAX_ACTIONS_PER_PLAYER;
   document.getElementById("turnNumber")
     .textContent =
-    `TURN ${Math.min(state.turn+1,totalActions)} / ${totalActions} · ACTION ${current ? Number(current.actions || 0) : 0} / ${maxActions}`;
+    `TURN ${Math.min(state.turn+1,totalActions)} / ${totalActions} · ACTION ${current ? Number(current.actions || 0) : 0} / ${MAX_ACTIONS_PER_PLAYER}`;
 
-  if(state.crownHolder!==NO_HOLDER){
-    const holder = state.players[state.crownHolder];
-    if(holder){
-      document.getElementById("statusInfo")
-        .innerHTML =
-        `👑 왕관: <b>${escapeHtml(holder.name)}</b><br>
-         왕관 보유자는 자신의 턴 종료 시 +1점 · 각자 ${maxActions}회 행동`;
-    }
-  }else{
-    document.getElementById("statusInfo")
-      .innerHTML =
-      `👑 왕관은 중앙에 있습니다.<br>
-       왕관 칸으로 이동하거나 보유자와 인접해 탈취하세요.`;
-  }
+  const modeLabel = state.gameMode === "steal" ? "👑 탈취 모드" : "🏆 점수 모드";
+  const holder = state.crownHolder!==null ? state.players[state.crownHolder] : null;
+  const meIndex = mode === "solo" ? 0 : localPlayerIndex(state);
+  const me = state.players[meIndex];
+  document.getElementById("statusInfo").innerHTML =
+    `<b>${modeLabel}</b><br>` +
+    (holder ? `👑 왕관: <b>${escapeHtml(holder.name)}</b><br>` : `👑 왕관: 중앙<br>`) +
+    (me && me.shield ? `🛡️ 내 방어막: 활성<br>` : "") +
+    (state.gameMode === "score" ? `왕관 보유자는 턴 종료 시 +1점<br>` : `마지막 왕관 보유자가 승리<br>`) +
+    `각자 ${MAX_ACTIONS_PER_PLAYER}회 행동`;
 
   /* 왕관 보유자가 바뀌었을 때만 탈취 연출 */
   if(
     previous &&
-    previous.holder !== NO_HOLDER &&
-    state.crownHolder !== NO_HOLDER &&
+    previous.holder !== null &&
+    state.crownHolder !== null &&
     previous.holder !== state.crownHolder
   ){
     const from = previous.players[previous.holder];
@@ -1991,13 +1677,11 @@ function renderBoard(state){
   const board =
     document.getElementById("board");
 
-  board.style.gridTemplateColumns = `repeat(${state.boardSize},1fr)`;
-
   board.innerHTML="";
 
-  for(let y=0;y<state.boardSize;y++){
+  for(let y=0;y<SIZE;y++){
 
-    for(let x=0;x<state.boardSize;x++){
+    for(let x=0;x<SIZE;x++){
 
       const cell =
         document.createElement("button");
@@ -2006,7 +1690,7 @@ function renderBoard(state){
       cell.dataset.x = x;
       cell.dataset.y = y;
 
-      const type=getTile(x,y,state.tilesMap);
+      const type=getTile(x,y);
 
       if(type!=="normal"){
         cell.classList.add(type);
@@ -2028,7 +1712,7 @@ function renderBoard(state){
       cell.appendChild(tile);
 
       if(
-        state.crownHolder===NO_HOLDER &&
+        state.crownHolder===null &&
         x===state.crownX &&
         y===state.crownY
       ){
@@ -2117,8 +1801,6 @@ function renderScores(state){
   const list =
     document.getElementById("scoreList");
 
-  const maxActions = state.maxActions || DEFAULT_MAX_ACTIONS;
-
   list.innerHTML="";
 
   state.players.forEach((p,i)=>{
@@ -2146,13 +1828,10 @@ function renderScores(state){
     score.className="score";
 
     score.textContent =
-      `${p.score}점 · ${Number(p.actions || 0)}/${maxActions}`;
+      `${p.score}점 · ${Number(p.actions || 0)}/${MAX_ACTIONS_PER_PLAYER}`;
 
-    if(state.crownHolder===i){
-
-      score.textContent += " 👑";
-
-    }
+    if(state.crownHolder===i){ score.textContent += " 👑"; }
+    if(p.shield){ score.textContent += " 🛡️"; }
 
     row.appendChild(name);
     row.appendChild(score);
@@ -2234,17 +1913,15 @@ function finishGame(state){
 
   showScreen("resultScreen");
 
-  const maxActions = state.maxActions || DEFAULT_MAX_ACTIONS;
-
-  const sorted =
-    [...state.players]
-      .sort((a,b)=>b.score-a.score);
-
-  const winner=sorted[0];
-
-  document.getElementById("winnerText")
-    .textContent =
-    `🏆 ${winner.name} 승리!`;
+  const sorted = [...state.players].sort((a,b)=>b.score-a.score);
+  let winner = null;
+  if(state.gameMode === "steal"){
+    winner = state.crownHolder !== null ? state.players[state.crownHolder] : null;
+    document.getElementById("winnerText").textContent = winner ? `👑 ${winner.name} 승리! 마지막 왕관 보유자입니다.` : `🤝 왕관 보유자가 없어 무승부입니다.`;
+  }else{
+    winner=sorted[0];
+    document.getElementById("winnerText").textContent = `🏆 ${winner.name} 승리!`;
+  }
 
   const list =
     document.getElementById("finalList");
@@ -2258,9 +1935,9 @@ function finishGame(state){
 
     row.className="final-row";
 
-    row.innerHTML =
-      `<span>${i+1}. ${COLORS[state.players.indexOf(p)]} ${escapeHtml(p.name)}</span>
-       <b>${p.score}점 · ${Number(p.actions || 0)}/${maxActions}회</b>`;
+    const crownMark = state.crownHolder === state.players.indexOf(p) ? " 👑" : "";
+    const shieldMark = p.shield ? " 🛡️" : "";
+    row.innerHTML = `<span>${i+1}. ${COLORS[state.players.indexOf(p)]} ${escapeHtml(p.name)}${crownMark}${shieldMark}</span><b>${p.score}점 · ${Number(p.actions || 0)}/${MAX_ACTIONS_PER_PLAYER}회</b>`;
 
     list.appendChild(row);
 
@@ -2303,8 +1980,7 @@ window.createRoom = async () => {
   isHost=true;
   roomCode=randomCode();
 
-  const settings = defaultSettings();
-  const positions=startingPositions(4,settings.boardSize);
+  const positions=startingPositions(4);
 
   const players={};
 
@@ -2315,18 +1991,19 @@ window.createRoom = async () => {
     x:positions[0].x,
     y:positions[0].y,
     score:0,
-    actions:0
+    actions:0,
+    shield:false
   };
 
   const room={
     host:localPlayerId,
     started:false,
+    gameMode:battleGameMode,
     turn:0,
     currentPlayer:0,
-    crownHolder:NO_HOLDER,
-    crownX:Math.floor(settings.boardSize/2),
-    crownY:Math.floor(settings.boardSize/2),
-    settings,
+    crownHolder:null,
+    crownX:2,
+    crownY:2,
     players
   };
 
@@ -2398,8 +2075,7 @@ window.joinRoom = async () => {
 
   const index=currentPlayers.length;
 
-  const settings = normalizeSettings(room.settings);
-  const pos=startingPositions(4,settings.boardSize)[index];
+  const pos=startingPositions(4)[index];
 
   await update(
     ref(db,`gcrown/rooms/${code}/players/${localPlayerId}`),
@@ -2410,7 +2086,8 @@ window.joinRoom = async () => {
       x:pos.x,
       y:pos.y,
       score:0,
-      actions:0
+      actions:0,
+      shield:false
     }
   );
 
@@ -2486,30 +2163,17 @@ function listenRoom(){
 
 function normalizeBattleState(room){
 
-  const settings = normalizeSettings(room.settings);
-  const tilesMap = buildTilesMap(settings);
-
   const players =
     Object.values(room.players || {})
       .sort((a,b)=>a.index-b.index)
       .map(p=>({
         ...p,
-        actions:Number(p.actions || 0)
+        actions:Number(p.actions || 0),
+        shield:Boolean(p.shield)
       }));
-
-  const rawHolder = room.crownHolder;
-  const crownHolder =
-    (rawHolder===undefined || rawHolder===null)
-      ? NO_HOLDER
-      : rawHolder;
 
   return {
     ...room,
-    boardSize:settings.boardSize,
-    maxActions:settings.maxActions,
-    tilesMap,
-    specialRules:settings.specialRules,
-    crownHolder,
     players
   };
 
@@ -2556,28 +2220,8 @@ function renderLobby(room){
 
   document.getElementById("roomCodeDisplay")
     .textContent=roomCode;
-
-  applySettingsToForm("battle",room.settings);
-
-  const settingsFields = [
-    "battleBoardSize","battleMaxActions",
-    "battleTileBonus","battleTileTrap","battleTileTeleport","battleTileDefense",
-    "battleRulePunishSteal"
-  ];
-
-  settingsFields.forEach(id=>{
-    const el = document.getElementById(id);
-    if(el) el.disabled = !isHost;
-  });
-
-  document.getElementById("battleSettingsDesc").textContent =
-    isHost
-      ? "방장만 설정을 변경할 수 있습니다. 변경 후 저장을 눌러주세요."
-      : "방장만 설정을 변경할 수 있습니다.";
-
-  document
-    .getElementById("battleSaveSettingsRow")
-    .classList.toggle("hidden",!isHost);
+  document.getElementById("lobbyMode").textContent =
+    room.gameMode === "steal" ? "👑 탈취 모드" : "🏆 점수 모드";
 
   updateLobbyButtons();
 
@@ -2591,22 +2235,6 @@ function updateLobbyButtons(){
     .classList.toggle("hidden",!isHost);
 
 }
-
-
-window.saveBattleSettings = async () => {
-
-  if(!isHost) return;
-
-  const settings = readSettingsForm("battle");
-
-  await update(
-    ref(db,`gcrown/rooms/${roomCode}/settings`),
-    settings
-  );
-
-  toast("설정이 저장되었습니다.");
-
-};
 
 
 window.startBattle = async () => {
@@ -2623,8 +2251,7 @@ window.startBattle = async () => {
   const room=snap.val();
 
   const players =
-    Object.values(room.players || {})
-      .sort((a,b)=>a.index-b.index);
+    Object.values(room.players || {});
 
   if(players.length<2){
 
@@ -2633,15 +2260,10 @@ window.startBattle = async () => {
 
   }
 
-  const settings = normalizeSettings(room.settings);
-  const positions = startingPositions(players.length,settings.boardSize);
-  const mid = Math.floor(settings.boardSize/2);
-
   const playerUpdates = {};
-  players.forEach((p,i)=>{
+  players.forEach(p=>{
     playerUpdates[`players/${p.id}/actions`] = 0;
-    playerUpdates[`players/${p.id}/x`] = positions[i].x;
-    playerUpdates[`players/${p.id}/y`] = positions[i].y;
+    playerUpdates[`players/${p.id}/shield`] = false;
   });
 
   await update(
@@ -2650,11 +2272,10 @@ window.startBattle = async () => {
       started:true,
       turn:0,
       currentPlayer:0,
-      crownHolder:NO_HOLDER,
+      crownHolder:null,
       finished:false,
-      crownX:mid,
-      crownY:mid,
-      settings,
+      crownX:2,
+      crownY:2,
       ...playerUpdates
     }
   );
@@ -2697,11 +2318,6 @@ async function battleMove(dx,dy){
         return room;
       }
 
-      const settings = normalizeSettings(room.settings);
-      const boardSize = settings.boardSize;
-      const maxActions = settings.maxActions;
-      const tilesMap = buildTilesMap(settings);
-
       const players =
         Object.values(room.players || {})
           .sort((a,b)=>a.index-b.index);
@@ -2717,7 +2333,7 @@ async function battleMove(dx,dy){
         return room;
       }
 
-      if(Number(me.actions || 0) >= maxActions){
+      if(Number(me.actions || 0) >= MAX_ACTIONS_PER_PLAYER){
         return room;
       }
 
@@ -2728,7 +2344,7 @@ async function battleMove(dx,dy){
       const nx=me.x+dx;
       const ny=me.y+dy;
 
-      if(!inside(nx,ny,boardSize)){
+      if(!inside(nx,ny)){
         return room;
       }
 
@@ -2746,7 +2362,7 @@ async function battleMove(dx,dy){
       me.x=nx;
       me.y=ny;
 
-      const type=getTile(nx,ny,tilesMap);
+      const type=getTile(nx,ny);
 
       if(type==="bonus"){
         me.score+=2;
@@ -2756,22 +2372,25 @@ async function battleMove(dx,dy){
         me.score=Math.max(0,me.score-1);
       }
 
+      if(type==="defense"){
+        me.shield = true;
+      }
+
       if(type==="teleport"){
 
-        const portals = computeTeleportPortals(tilesMap);
-        const target = portals.find(p=>!(p.x===me.x && p.y===me.y));
+        if(nx===0 && ny===4){
 
-        if(target){
-          me.x=target.x;
-          me.y=target.y;
+          me.x=4;
+          me.y=0;
+
+        }else{
+
+          me.x=0;
+          me.y=4;
+
         }
 
       }
-
-      const holderIsNone =
-        room.crownHolder===undefined ||
-        room.crownHolder===null ||
-        room.crownHolder===NO_HOLDER;
 
       /*
         왕관 획득
@@ -2780,7 +2399,10 @@ async function battleMove(dx,dy){
       if(
         me.x===room.crownX &&
         me.y===room.crownY &&
-        (holderIsNone || room.crownHolder===me.index)
+        (
+          room.crownHolder===null ||
+          room.crownHolder===me.index
+        )
       ){
 
         room.crownHolder=me.index;
@@ -2792,7 +2414,7 @@ async function battleMove(dx,dy){
       */
 
       if(
-        !holderIsNone &&
+        room.crownHolder!==null &&
         room.crownHolder!==me.index
       ){
 
@@ -2808,38 +2430,36 @@ async function battleMove(dx,dy){
             Math.abs(me.y-holder.y);
 
           if(distance===1){
-
-            if(settings.specialRules.punishSteal){
-              holder.score = Math.max(0,(holder.score||0)-1);
+            if(holder.shield){
+              holder.shield=false;
+            }else{
+              room.crownHolder=me.index;
             }
-
-            room.crownHolder=me.index;
-
           }
 
         }
 
       }
 
-      /* 왕관 보유자가 턴 종료 시 +1점 */
-      if(room.crownHolder===me.index){
+      /* 점수 모드에서만 왕관 보유자 턴 종료 +1점 */
+      if(room.gameMode === "score" && room.crownHolder===me.index){
         me.score+=1;
       }
 
       /* 이 플레이어의 행동 횟수 +1 */
       me.actions = Math.min(
-        maxActions,
+        MAX_ACTIONS_PER_PLAYER,
         Number(me.actions || 0) + 1
       );
 
       room.turn++;
 
-      /* maxActions회를 끝낸 플레이어는 건너뜀 */
+      /* 30회를 끝낸 플레이어는 건너뜀 */
       let next = (me.index + 1) % players.length;
       let checked = 0;
       while(
         checked < players.length &&
-        Number(players.find(p=>p.index===next)?.actions || 0) >= maxActions
+        Number(players.find(p=>p.index===next)?.actions || 0) >= MAX_ACTIONS_PER_PLAYER
       ){
         next = (next + 1) % players.length;
         checked++;
@@ -2855,7 +2475,7 @@ async function battleMove(dx,dy){
       });
 
       const finished = players.every(
-        p=>Number(p.actions || 0) >= maxActions
+        p=>Number(p.actions || 0) >= MAX_ACTIONS_PER_PLAYER
       );
 
       if(finished){
