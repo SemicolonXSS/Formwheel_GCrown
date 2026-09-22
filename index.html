@@ -496,6 +496,128 @@ input:focus{
   transform:translateX(-50%) translateY(0);
 }
 
+/* =========================
+   CROWN STEAL EFFECT
+========================= */
+.crown-fly-layer{
+  position:fixed;
+  inset:0;
+  pointer-events:none;
+  z-index:250;
+  overflow:hidden;
+}
+
+.flying-crown{
+  position:fixed;
+  left:0;
+  top:0;
+  font-size:54px;
+  line-height:1;
+  transform:translate(-50%,-50%) scale(1);
+  filter:drop-shadow(0 7px 14px rgba(245,158,11,.45));
+  transition:
+    left .62s cubic-bezier(.2,.85,.2,1),
+    top .62s cubic-bezier(.2,.85,.2,1),
+    transform .62s cubic-bezier(.2,.85,.2,1);
+}
+
+.flying-crown::after{
+  content:"✦  ✨  ✦";
+  position:absolute;
+  left:50%;
+  top:50%;
+  transform:translate(-50%,-50%);
+  font-size:18px;
+  white-space:nowrap;
+  opacity:.75;
+  pointer-events:none;
+}
+
+.crown-steal-banner{
+  position:fixed;
+  left:50%;
+  top:50%;
+  z-index:260;
+  pointer-events:none;
+  opacity:0;
+  transform:translate(-50%,-50%) scale(.55) rotate(-3deg);
+  white-space:nowrap;
+  font-size:clamp(38px,8vw,88px);
+  font-weight:1000;
+  letter-spacing:-4px;
+  color:#fff7b2;
+  -webkit-text-stroke:3px #7c2d12;
+  text-shadow:
+    0 5px 0 #ea580c,
+    0 10px 22px rgba(234,88,12,.4);
+  filter:drop-shadow(0 10px 20px rgba(0,0,0,.2));
+}
+
+.crown-steal-banner.show{
+  animation:crownStealBanner 1.25s cubic-bezier(.2,.9,.2,1) both;
+}
+
+@keyframes crownStealBanner{
+  0%{
+    opacity:0;
+    transform:translate(-50%,-50%) scale(.55) rotate(-5deg);
+  }
+  18%{
+    opacity:1;
+    transform:translate(-50%,-50%) scale(1.12) rotate(2deg);
+  }
+  38%{
+    transform:translate(-50%,-50%) scale(.98) rotate(-1deg);
+  }
+  72%{
+    opacity:1;
+    transform:translate(-50%,-50%) scale(1) rotate(0);
+  }
+  100%{
+    opacity:0;
+    transform:translate(-50%,-50%) scale(1.08) rotate(0);
+  }
+}
+
+.crown-burst{
+  position:fixed;
+  z-index:255;
+  pointer-events:none;
+  width:18px;
+  height:18px;
+  border-radius:50%;
+  border:4px solid #fbbf24;
+  box-shadow:
+    0 0 0 0 rgba(251,191,36,.55),
+    0 0 24px rgba(251,191,36,.75);
+  transform:translate(-50%,-50%) scale(.2);
+  animation:crownBurst .65s ease-out forwards;
+}
+
+@keyframes crownBurst{
+  0%{
+    opacity:1;
+    transform:translate(-50%,-50%) scale(.2);
+    box-shadow:
+      0 0 0 0 rgba(251,191,36,.55),
+      0 0 24px rgba(251,191,36,.75);
+  }
+  100%{
+    opacity:0;
+    transform:translate(-50%,-50%) scale(5);
+    box-shadow:
+      0 0 0 30px rgba(251,191,36,0),
+      0 0 60px rgba(251,191,36,0);
+  }
+}
+
+@media(max-width:480px){
+  .crown-steal-banner{
+    letter-spacing:-2px;
+    -webkit-text-stroke:2px #7c2d12;
+  }
+}
+
 .small{
   font-size:12px;
   color:#8a8e99;
@@ -581,7 +703,7 @@ input:focus{
         <h2>Solo</h2>
         <p>
           AI 플레이어들과 왕관을 놓고 경쟁하세요.
-          150턴 후 가장 높은 점수를 얻으면 승리합니다.
+          각 플레이어가 30번씩 행동한 뒤 가장 높은 점수로 승부합니다.
         </p>
       </div>
 
@@ -713,7 +835,7 @@ input:focus{
           <div>
             <div id="turnLabel" class="turn-label">🔵 Player</div>
             <div id="turnNumber" class="turn-number">
-              TURN 1 / 20
+              TURN 1 / 120
             </div>
           </div>
 
@@ -818,6 +940,8 @@ input:focus{
 </main>
 
 <div id="toast" class="toast"></div>
+<div id="crownFlyLayer" class="crown-fly-layer"></div>
+<div id="crownStealBanner" class="crown-steal-banner">⚔️ 왕관 탈취!</div>
 
 
 <script type="module">
@@ -861,7 +985,6 @@ const db = getDatabase(app);
 ========================= */
 
 const SIZE = 5;
-const MAX_TURNS = 150;
 const MAX_ACTIONS_PER_PLAYER = 30;
 
 const COLORS = [
@@ -892,6 +1015,7 @@ let localPlayerId = null;
 let isHost = false;
 
 let soloState = null;
+let lastCrownSnapshot = null;
 
 
 /* =========================
@@ -929,6 +1053,7 @@ function cleanupRoom(){
 
   roomCode = null;
   localPlayerId = null;
+  lastCrownSnapshot = null;
   isHost = false;
 }
 
@@ -1014,6 +1139,7 @@ window.startSolo = () => {
   }
 
   mode = "solo";
+  lastCrownSnapshot = null;
 
   const positions = startingPositions(4);
 
@@ -1023,7 +1149,7 @@ window.startSolo = () => {
 
     turn:0,
 
-    maxTurns:MAX_TURNS,
+    maxActions:MAX_ACTIONS_PER_PLAYER,
 
     currentPlayer:0,
 
@@ -1040,6 +1166,7 @@ window.startSolo = () => {
         x:positions[0].x,
         y:positions[0].y,
         score:0,
+        actions:0,
         alive:true
       },
 
@@ -1049,6 +1176,7 @@ window.startSolo = () => {
         x:positions[1].x,
         y:positions[1].y,
         score:0,
+        actions:0,
         alive:true
       },
 
@@ -1058,6 +1186,7 @@ window.startSolo = () => {
         x:positions[2].x,
         y:positions[2].y,
         score:0,
+        actions:0,
         alive:true
       },
 
@@ -1067,6 +1196,7 @@ window.startSolo = () => {
         x:positions[3].x,
         y:positions[3].y,
         score:0,
+        actions:0,
         alive:true
       }
 
@@ -1140,7 +1270,7 @@ function soloMove(dx,dy){
 
   renderGame(state);
 
-  if(state.turn < MAX_TURNS){
+  if(!isGameFinished(state)){
 
     setTimeout(aiTurn,450);
 
@@ -1161,7 +1291,7 @@ function aiTurn(){
 
   const state = soloState;
 
-  if(state.turn>=MAX_TURNS) return;
+  if(isGameFinished(state)) return;
 
   const index = state.currentPlayer;
 
@@ -1231,7 +1361,7 @@ function aiTurn(){
 
   renderGame(state);
 
-  if(state.turn < MAX_TURNS){
+  if(!isGameFinished(state)){
 
     if(state.currentPlayer===0){
 
@@ -1259,22 +1389,46 @@ function aiTurn(){
 function finishTurn(state){
 
   const previous = state.currentPlayer;
+  const player = state.players[previous];
+
+  if(!player) return;
 
   /*
     왕관을 가진 플레이어가
     자신의 턴을 끝냈을 때 +1
   */
-
   if(state.crownHolder===previous){
-
-    state.players[previous].score += 1;
+    player.score += 1;
   }
+
+  /* 모든 플레이어는 정확히 30번의 행동 기회를 가짐 */
+  player.actions = Math.min(
+    MAX_ACTIONS_PER_PLAYER,
+    Number(player.actions || 0) + 1
+  );
 
   state.turn++;
 
-  state.currentPlayer =
-    state.turn % state.players.length;
+  /* 아직 30회를 채우지 않은 다음 플레이어에게 턴 전달 */
+  let next = (previous + 1) % state.players.length;
+  let checked = 0;
 
+  while(
+    checked < state.players.length &&
+    Number(state.players[next].actions || 0) >= MAX_ACTIONS_PER_PLAYER
+  ){
+    next = (next + 1) % state.players.length;
+    checked++;
+  }
+
+  state.currentPlayer = next;
+}
+
+function isGameFinished(state){
+  return state.players.length > 0 &&
+    state.players.every(
+      p => Number(p.actions || 0) >= MAX_ACTIONS_PER_PLAYER
+    );
 }
 
 
@@ -1284,48 +1438,38 @@ function finishTurn(state){
 
 function checkCrown(state,player){
 
-  const index =
-    state.players.indexOf(player);
+  const index = state.players.indexOf(player);
+  if(index < 0) return;
 
+  /* 중앙의 왕관 획득 */
   if(
     player.x===state.crownX &&
-    player.y===state.crownY
+    player.y===state.crownY &&
+    (state.crownHolder===null || state.crownHolder===index)
   ){
-
-    if(
-      state.crownHolder===null ||
-      state.crownHolder===index
-    ){
-
-      state.crownHolder=index;
-
+    if(state.crownHolder !== index){
+      state.crownHolder = index;
       toast("👑 왕관을 획득했습니다!");
-
     }
+    return;
   }
 
-  /*
-    왕관 보유자 옆으로 이동했다면
-    왕관을 빼앗을 수 있는 상태.
-  */
+  /* 왕관 보유자와 상하좌우로 바로 붙으면 탈취 */
+  if(
+    state.crownHolder!==null &&
+    state.crownHolder!==index
+  ){
+    const holder = state.players[state.crownHolder];
+    if(!holder) return;
 
-  if(state.crownHolder!==null &&
-     state.crownHolder!==index){
+    const distance =
+      Math.abs(player.x-holder.x) +
+      Math.abs(player.y-holder.y);
 
-    const holder =
-      state.players[state.crownHolder];
-
-    if(
-      Math.abs(player.x-holder.x)+
-      Math.abs(player.y-holder.y)===1
-    ){
-
+    if(distance===1){
       state.crownHolder=index;
-
-      toast("⚔️ 왕관을 빼앗았습니다!");
-
+      toast(`⚔️ ${player.name}이(가) 왕관을 탈취!`);
     }
-
   }
 
 }
@@ -1420,41 +1564,60 @@ function isOccupiedByOther(players,index,x,y){
 
 function renderGame(state){
 
+  const previous = lastCrownSnapshot;
+
   renderBoard(state);
   renderScores(state);
 
   const current =
     state.players[state.currentPlayer];
 
-  document.getElementById("turnLabel")
-    .textContent =
-    `${COLORS[state.currentPlayer]} ${current.name}의 턴`;
+  if(current){
+    document.getElementById("turnLabel")
+      .textContent =
+      `${COLORS[state.currentPlayer]} ${current.name}의 턴`;
+  }
 
+  const totalActions = state.players.length * MAX_ACTIONS_PER_PLAYER;
   document.getElementById("turnNumber")
     .textContent =
-    `TURN ${Math.min(state.turn+1,MAX_TURNS)} / ${MAX_TURNS}`;
-
-  const me =
-    state.players[
-      mode==="solo" ? 0 : localPlayerIndex(state)
-    ];
+    `TURN ${Math.min(state.turn+1,totalActions)} / ${totalActions} · ACTION ${current ? Number(current.actions || 0) : 0} / ${MAX_ACTIONS_PER_PLAYER}`;
 
   if(state.crownHolder!==null){
-
-    const holder =
-      state.players[state.crownHolder];
-
-    document.getElementById("statusInfo")
-      .innerHTML =
-      `👑 왕관: <b>${holder.name}</b><br>
-       왕관 보유자는 자신의 턴 종료 시 +1점`;
+    const holder = state.players[state.crownHolder];
+    if(holder){
+      document.getElementById("statusInfo")
+        .innerHTML =
+        `👑 왕관: <b>${escapeHtml(holder.name)}</b><br>
+         왕관 보유자는 자신의 턴 종료 시 +1점 · 각자 ${MAX_ACTIONS_PER_PLAYER}회 행동`;
+    }
   }else{
-
     document.getElementById("statusInfo")
       .innerHTML =
       `👑 왕관은 중앙에 있습니다.<br>
-       왕관 칸으로 이동해 획득하세요.`;
+       왕관 칸으로 이동하거나 보유자와 인접해 탈취하세요.`;
   }
+
+  /* 왕관 보유자가 바뀌었을 때만 탈취 연출 */
+  if(
+    previous &&
+    previous.holder !== null &&
+    state.crownHolder !== null &&
+    previous.holder !== state.crownHolder
+  ){
+    const from = previous.players[previous.holder];
+    const to = state.players[state.crownHolder];
+    if(from && to){
+      requestAnimationFrame(()=>{
+        playCrownStealAnimation(from, to);
+      });
+    }
+  }
+
+  lastCrownSnapshot = {
+    holder: state.crownHolder,
+    players: state.players.map(p=>({x:p.x,y:p.y}))
+  };
 
 }
 
@@ -1474,6 +1637,8 @@ function renderBoard(state){
         document.createElement("button");
 
       cell.className="cell";
+      cell.dataset.x = x;
+      cell.dataset.y = y;
 
       const type=getTile(x,y);
 
@@ -1613,7 +1778,7 @@ function renderScores(state){
     score.className="score";
 
     score.textContent =
-      `${p.score}점`;
+      `${p.score}점 · ${Number(p.actions || 0)}/${MAX_ACTIONS_PER_PLAYER}`;
 
     if(state.crownHolder===i){
 
@@ -1632,10 +1797,72 @@ function renderScores(state){
 
 
 /* =========================
+   CROWN STEAL ANIMATION
+========================= */
+
+function getCellCenter(x,y){
+  const cell = document.querySelector(`.cell[data-x="${x}"][data-y="${y}"]`);
+  if(!cell) return null;
+  const rect = cell.getBoundingClientRect();
+  return {
+    x: rect.left + rect.width/2,
+    y: rect.top + rect.height/2
+  };
+}
+
+function playCrownStealAnimation(fromPlayer,toPlayer){
+  const start = getCellCenter(fromPlayer.x,fromPlayer.y);
+  const end = getCellCenter(toPlayer.x,toPlayer.y);
+  if(!start || !end) return;
+
+  const layer = document.getElementById("crownFlyLayer");
+  const banner = document.getElementById("crownStealBanner");
+  if(!layer || !banner) return;
+
+  layer.innerHTML="";
+
+  const burst = document.createElement("div");
+  burst.className="crown-burst";
+  burst.style.left = `${start.x}px`;
+  burst.style.top = `${start.y}px`;
+  layer.appendChild(burst);
+
+  const crown = document.createElement("div");
+  crown.className="flying-crown";
+  crown.textContent="👑";
+  crown.style.left = `${start.x}px`;
+  crown.style.top = `${start.y}px`;
+  layer.appendChild(crown);
+
+  /* 왕관이 기존 보유자에게서 새 보유자에게 날아감 */
+  requestAnimationFrame(()=>{
+    crown.style.left = `${end.x}px`;
+    crown.style.top = `${end.y}px`;
+    crown.style.transform = "translate(-50%,-50%) scale(1.25) rotate(360deg)";
+  });
+
+  banner.classList.remove("show");
+  void banner.offsetWidth;
+  banner.classList.add("show");
+
+  setTimeout(()=>{
+    crown.remove();
+    burst.remove();
+  },700);
+
+  setTimeout(()=>{
+    banner.classList.remove("show");
+  },1300);
+}
+
+
+/* =========================
    RESULT
 ========================= */
 
 function finishGame(state){
+
+  if(document.getElementById("resultScreen").classList.contains("active")) return;
 
   showScreen("resultScreen");
 
@@ -1663,7 +1890,7 @@ function finishGame(state){
 
     row.innerHTML =
       `<span>${i+1}. ${COLORS[state.players.indexOf(p)]} ${escapeHtml(p.name)}</span>
-       <b>${p.score}점</b>`;
+       <b>${p.score}점 · ${Number(p.actions || 0)}/${MAX_ACTIONS_PER_PLAYER}회</b>`;
 
     list.appendChild(row);
 
@@ -1700,6 +1927,7 @@ window.createRoom = async () => {
       .value.trim() || "Player";
 
   mode="battle";
+  lastCrownSnapshot = null;
 
   localPlayerId=playerId();
   isHost=true;
@@ -1715,7 +1943,8 @@ window.createRoom = async () => {
     index:0,
     x:positions[0].x,
     y:positions[0].y,
-    score:0
+    score:0,
+    actions:0
   };
 
   const room={
@@ -1790,6 +2019,7 @@ window.joinRoom = async () => {
   }
 
   mode="battle";
+  lastCrownSnapshot = null;
   roomCode=code;
   localPlayerId=playerId();
   isHost=false;
@@ -1806,7 +2036,8 @@ window.joinRoom = async () => {
       index:index,
       x:pos.x,
       y:pos.y,
-      score:0
+      score:0,
+      actions:0
     }
   );
 
@@ -1868,12 +2099,8 @@ function listenRoom(){
 
           renderGame(state);
 
-          if(
-            room.turn>=MAX_TURNS
-          ){
-
+          if(isGameFinished(state)){
             finishGame(state);
-
           }
 
         }
@@ -1888,7 +2115,11 @@ function normalizeBattleState(room){
 
   const players =
     Object.values(room.players || {})
-      .sort((a,b)=>a.index-b.index);
+      .sort((a,b)=>a.index-b.index)
+      .map(p=>({
+        ...p,
+        actions:Number(p.actions || 0)
+      }));
 
   return {
     ...room,
@@ -1976,6 +2207,11 @@ window.startBattle = async () => {
 
   }
 
+  const playerUpdates = {};
+  players.forEach(p=>{
+    playerUpdates[`players/${p.id}/actions`] = 0;
+  });
+
   await update(
     ref(db,`gcrown/rooms/${roomCode}`),
     {
@@ -1983,8 +2219,10 @@ window.startBattle = async () => {
       turn:0,
       currentPlayer:0,
       crownHolder:null,
+      finished:false,
       crownX:2,
-      crownY:2
+      crownY:2,
+      ...playerUpdates
     }
   );
 
@@ -2022,7 +2260,7 @@ async function battleMove(dx,dy){
     roomRef,
     room=>{
 
-      if(!room || !room.started){
+      if(!room || !room.started || room.finished){
         return room;
       }
 
@@ -2038,6 +2276,10 @@ async function battleMove(dx,dy){
       if(!me) return room;
 
       if(me.index!==room.currentPlayer){
+        return room;
+      }
+
+      if(Number(me.actions || 0) >= MAX_ACTIONS_PER_PLAYER){
         return room;
       }
 
@@ -2139,20 +2381,30 @@ async function battleMove(dx,dy){
 
       }
 
-      /*
-        왕관 보유자가 턴 종료
-      */
-
+      /* 왕관 보유자가 턴 종료 시 +1점 */
       if(room.crownHolder===me.index){
-
         me.score+=1;
-
       }
+
+      /* 이 플레이어의 행동 횟수 +1 */
+      me.actions = Math.min(
+        MAX_ACTIONS_PER_PLAYER,
+        Number(me.actions || 0) + 1
+      );
 
       room.turn++;
 
-      room.currentPlayer =
-        room.turn % players.length;
+      /* 30회를 끝낸 플레이어는 건너뜀 */
+      let next = (me.index + 1) % players.length;
+      let checked = 0;
+      while(
+        checked < players.length &&
+        Number(players.find(p=>p.index===next)?.actions || 0) >= MAX_ACTIONS_PER_PLAYER
+      ){
+        next = (next + 1) % players.length;
+        checked++;
+      }
+      room.currentPlayer = next;
 
       /*
         객체 다시 저장
@@ -2161,6 +2413,14 @@ async function battleMove(dx,dy){
       players.forEach(p=>{
         room.players[p.id]=p;
       });
+
+      const finished = players.every(
+        p=>Number(p.actions || 0) >= MAX_ACTIONS_PER_PLAYER
+      );
+
+      if(finished){
+        room.finished=true;
+      }
 
       return room;
 
@@ -2226,6 +2486,7 @@ window.exitGame = () => {
 
     soloState=null;
     mode=null;
+    lastCrownSnapshot=null;
     showScreen("menuScreen");
 
   }
