@@ -2031,14 +2031,16 @@ window.joinRoom = ()=>roomAction(async()=>{
   if(!initial.exists()){toast("방을 찾을 수 없습니다.");return;}
   let reason="방을 찾을 수 없습니다.";
   const result=await runTransaction(ref(db,`gcrown/rooms/${code}`),room=>{
-    if(!room) return;
+    // A transaction may start with an empty local cache even after a one-time read.
+    // Returning null lets Firebase compare with the server and retry with fresh data.
+    if(!room) return null;
     if(room.started){reason="이미 시작된 게임입니다.";return;}
     const players=Object.values(room.players||{});
     if(players.length>=4){reason="방이 가득 찼습니다.";return;}
     const index=players.length,pos=startingPositions(4,normalizeSettings(room.settings).boardSize)[index];
     room.players[id]={id,name,index,...pos,score:0,actions:0,shield:false};return room;
   },{applyLocally:false});
-  if(!result.committed){toast(reason);return;}
+  if(!result.committed || !result.snapshot.val()?.players?.[id]){toast(reason);return;}
   cleanupRoom();mode="battle";roomCode=code;localPlayerId=id;isHost=false;
   saveSession();showLobby();listenRoom();
 });
