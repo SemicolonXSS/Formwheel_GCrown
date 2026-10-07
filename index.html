@@ -1007,7 +1007,7 @@ async function initFirebase(){
     let session;
     try { session = JSON.parse(sessionStorage.getItem("gcrownSession") || "null"); } catch {}
     if(session && /^\d{4}$/.test(session.code) && session.playerId){
-      const snap = await get(ref(db, `gcrown/rooms/${session.code}`));
+      const snap = await readRoom(ref(db, `gcrown/rooms/${session.code}`));
       const room = snap.val();
       if(room?.players?.[session.playerId] && !room.players[session.playerId].left){
         mode = "battle"; roomCode = session.code; localPlayerId = session.playerId;
@@ -1015,6 +1015,9 @@ async function initFirebase(){
       }else{ sessionStorage.removeItem("gcrownSession"); }
     }
   } catch(error){ reportError(error); }
+}
+function readRoom(roomRef){
+  return new Promise((resolve,reject)=>onValue(roomRef,resolve,reject,{onlyOnce:true}));
 }
 function saveSession(){
   try { sessionStorage.setItem("gcrownSession", JSON.stringify({code:roomCode,playerId:localPlayerId})); } catch {}
@@ -2024,7 +2027,7 @@ window.joinRoom = ()=>roomAction(async()=>{
   const code=document.getElementById("joinCode").value.trim();
   if(!/^\d{4}$/.test(code)){toast("4자리 방 코드를 입력하세요.");return;}
   const name=document.getElementById("battleName").value.trim().slice(0,12)||"Player", id=playerId();
-  const initial=await get(ref(db,`gcrown/rooms/${code}`));
+  const initial=await readRoom(ref(db,`gcrown/rooms/${code}`));
   if(!initial.exists()){toast("방을 찾을 수 없습니다.");return;}
   let reason="방을 찾을 수 없습니다.";
   const result=await runTransaction(ref(db,`gcrown/rooms/${code}`),room=>{
