@@ -1477,7 +1477,7 @@ function finishTurn(state){
   const previous = state.currentPlayer;
   const player = state.players[previous];
 
-  if(!player) return;
+  if(!player || Number(player.actions||0)>=state.maxActions) return;
 
   /*
     왕관을 가진 플레이어가
@@ -2518,4 +2518,5 @@ initFirebase();
 
 </body>
 </html>
+
 
