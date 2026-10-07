@@ -694,6 +694,16 @@ input:focus{
 </header>
 
 <main class="wrap">
+  <div id="connectionStatus" class="info" role="status" style="margin-top:14px">온라인 연결 확인 중… · Solo는 연결 없이도 플레이할 수 있습니다.</div>
+  <details class="card" style="margin-top:16px">
+    <summary style="cursor:pointer;font-weight:800">📖 규칙과 승리 조건</summary>
+    <p>상하좌우로 한 칸씩 이동하며 중앙의 왕관을 획득하세요. 왕관 보유자 옆으로 이동하면 탈취합니다. 다른 말이 있는 칸에는 이동할 수 없습니다.</p>
+    <p>🏆 점수 모드: 왕관 보유자가 자신의 턴을 마칠 때 +1점. 각자 설정한 행동 횟수(기본 30회)를 마치면 최고 점수가 승리하며, 동점은 공동 승리입니다.<br>👑 탈취 모드: 마지막 왕관 보유자가 승리합니다. 보유자가 없으면 무승부입니다.</p>
+    <p>💰 보너스 +2점 · 🕳️ 함정 −1점(최소 0점) · 🛡️ 방어막은 탈취 1회 방어 · 🌀 순간이동은 반대 포털로 이동(도착 칸이 비었을 때).</p>
+    <p>Solo는 AI 3명과 플레이합니다. 쉬움은 무작위 이동, 보통은 왕관 추적, 어려움은 탈취·회피·타일 효과를 함께 고려합니다. Battle은 2~4명이며 방장이 시작합니다.</p>
+    <button class="secondary" onclick="startTutorial()">🎓 직접 해보는 튜토리얼</button>
+  </details>
+  <div id="tutorialHint" class="info hidden" style="margin-top:14px" role="status"></div>
 
   <!-- MENU -->
   <section id="menuScreen" class="screen active">
@@ -870,6 +880,7 @@ input:focus{
             이동
           </div>
 
+          <button class="secondary" onclick="passTurn()" style="margin-bottom:10px">이동 불가 시 턴 넘기기</button>
           <div class="move-buttons">
 
             <button class="empty">·</button>
@@ -955,20 +966,59 @@ input:focus{
 
 <script type="module">
 
-import { initializeApp }
-from "https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js";
+let db, ref, get, onValue, runTransaction;
+let firebaseReady = false;
+let connected = false;
+let busy = false;
+let movePending = false;
+let aiTimer = null;
+let tutorialStep = -1;
+let currentBattleState = null;
 
-import {
-  getDatabase,
-  ref,
-  get,
-  set,
-  update,
-  onValue,
-  runTransaction
+function connectionStatus(message){
+  document.getElementById("connectionStatus").textContent = message;
 }
-from "https://www.gstatic.com/firebasejs/12.2.1/firebase-database.js";
-
+function reportError(error){
+  const code = String(error.code || error.message || "unknown");
+  const message = /permission|denied/i.test(code) ? "Database Rules에서 GCrown 접근이 거부되었습니다." :
+    /api-key/i.test(code) ? "Firebase API Key를 확인해주세요." :
+    /auth/i.test(code) ? "Firebase 인증 설정을 확인해주세요." :
+    `연결 오류: ${code}`;
+  connectionStatus(message);
+  toast(message);
+}
+function requireOnline(){
+  if(!firebaseReady || !connected){ toast("Battle 연결이 준비되지 않았습니다. 위 연결 상태를 확인해주세요."); return false; }
+  return true;
+}
+async function initFirebase(){
+  try {
+    const [appSdk, sdk] = await Promise.all([
+      import("https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js"),
+      import("https://www.gstatic.com/firebasejs/12.2.1/firebase-database.js")
+    ]);
+    ({ref, get, onValue, runTransaction} = sdk);
+    db = sdk.getDatabase(appSdk.initializeApp(firebaseConfig));
+    firebaseReady = true;
+    onValue(ref(db, ".info/connected"), snap=>{
+      connected = snap.val() === true;
+      connectionStatus(connected ? "🟢 Firebase 연결됨" : "🔄 Firebase 재연결 중… · Solo는 계속 사용할 수 있습니다.");
+    }, reportError);
+    let session;
+    try { session = JSON.parse(sessionStorage.getItem("gcrownSession") || "null"); } catch {}
+    if(session && /^\d{4}$/.test(session.code) && session.playerId){
+      const snap = await get(ref(db, `gcrown/rooms/${session.code}`));
+      const room = snap.val();
+      if(room?.players?.[session.playerId] && !room.players[session.playerId].left){
+        mode = "battle"; roomCode = session.code; localPlayerId = session.playerId;
+        isHost = room.host === localPlayerId; listenRoom();
+      }else{ sessionStorage.removeItem("gcrownSession"); }
+    }
+  } catch(error){ reportError(error); }
+}
+function saveSession(){
+  try { sessionStorage.setItem("gcrownSession", JSON.stringify({code:roomCode,playerId:localPlayerId})); } catch {}
+}
 
 /* =========================
    FIREBASE
@@ -985,8 +1035,7 @@ const firebaseConfig = {
   measurementId: "G-T372YXDF8D"
 };
 
-const app = initializeApp(firebaseConfig);
-const db = getDatabase(app);
+
 
 
 /* =========================
@@ -1066,11 +1115,19 @@ window.showBattleSetup = () => {
 };
 
 window.backMenu = () => {
+  if(mode === "battle"){ window.leaveRoom(); return; }
   cleanupRoom();
+  soloState = null;
   showScreen("menuScreen");
 };
 
 function cleanupRoom(){
+  clearTimeout(aiTimer);
+  tutorialStep = -1;
+  document.getElementById("tutorialHint").classList.add("hidden");
+  mode = null;
+  currentBattleState = null;
+  try { sessionStorage.removeItem("gcrownSession"); } catch {}
 
   if(roomListener){
     roomListener();
@@ -1171,6 +1228,7 @@ window.startSolo = () => {
     name = "Player";
   }
 
+  cleanupRoom();
   mode = "solo";
   lastCrownSnapshot = null;
 
@@ -1261,7 +1319,7 @@ window.movePlayer = async (dx,dy) => {
   }
 
   if(mode==="battle"){
-    battleMove(dx,dy);
+    return battleMove(dx,dy);
   }
 
 };
@@ -1274,6 +1332,8 @@ window.movePlayer = async (dx,dy) => {
 function soloMove(dx,dy){
 
   const state = soloState;
+  if(!state || isGameFinished(state)) return;
+  if(tutorialStep>=0 && (dx!==1 || dy!==0)){toast("튜토리얼 안내에 따라 오른쪽으로 한 칸 이동하세요.");return;}
   const player = state.players[0];
 
   if(state.currentPlayer!==0){
@@ -1281,7 +1341,7 @@ function soloMove(dx,dy){
     return;
   }
 
-  if(dx===0 && dy===0){
+  if(!Number.isInteger(dx) || !Number.isInteger(dy) || Math.abs(dx)+Math.abs(dy)!==1){
     toast("한 칸을 선택하세요.");
     return;
   }
@@ -1309,10 +1369,11 @@ function soloMove(dx,dy){
   finishTurn(state);
 
   renderGame(state);
+  if(tutorialStep >= 0){ advanceTutorial(); return; }
 
   if(!isGameFinished(state)){
 
-    setTimeout(aiTurn,450);
+    aiTimer = setTimeout(aiTurn,450);
 
   }else{
 
@@ -1327,39 +1388,82 @@ function soloMove(dx,dy){
    AI
 ========================= */
 
+function legalMoves(state,index){
+  const p=state.players[index];
+  return [[1,0],[-1,0],[0,1],[0,-1]].filter(([dx,dy])=>
+    inside(p.x+dx,p.y+dy,getSettings(state).boardSize) &&
+    !isOccupiedByOther(state.players,index,p.x+dx,p.y+dy));
+}
+function chooseAiMove(state,index){
+  const ai=state.players[index], options=legalMoves(state,index);
+  if(!options.length) return null;
+  const difficulty=getSettings(state).aiDifficulty;
+  if(difficulty === "easy") return options[Math.floor(Math.random()*options.length)];
+  const holder=state.crownHolder==null ? null : state.players[state.crownHolder];
+  const target=holder || {x:state.crownX,y:state.crownY};
+  function value([dx,dy]){
+    let x=ai.x+dx,y=ai.y+dy;
+    const tile=getTile(x,y,state.settings);
+    const c=getSettings(state).boardSize-1;
+    if(tile === "teleport"){
+      const tx=x===0 ? c : 0, ty=y===0 ? c : 0;
+      if(!isOccupiedByOther(state.players,index,tx,ty)){ x=tx; y=ty; }
+    }
+    const dist=Math.abs(x-target.x)+Math.abs(y-target.y);
+    if(difficulty === "normal") return holder===ai ? 0 : -dist;
+    let score = holder===ai ? Math.min(...state.players.filter((_,i)=>i!==index).map(p=>Math.abs(x-p.x)+Math.abs(y-p.y)))*3 : -dist*4;
+    if(holder && holder!==ai && dist===1) score+=holder.shield?10:50;
+    if(!holder && dist===0) score+=60;
+    if(tile==='defense' && !ai.shield) score+=8;
+    if(state.gameMode==='score'){ if(tile==='bonus') score+=5; if(tile==='trap') score-=5; }
+    return score;
+  }
+  const ranked=options.map(move=>({move,value:value(move)}));
+  const best=Math.max(...ranked.map(p=>p.value));
+  const choices=ranked.filter(p=>p.value===best);
+  return choices[Math.floor(Math.random()*choices.length)].move;
+}
 function aiTurn(){
   const state=soloState;
-  if(isGameFinished(state)) return;
+  if(mode!=="solo" || !state || isGameFinished(state) || tutorialStep>=0) return;
   const index=state.currentPlayer;
   if(index===0) return;
-  const ai=state.players[index];
-  const size=state.settings.boardSize;
-  let options=[[1,0],[-1,0],[0,1],[0,-1]].sort(()=>Math.random()-.5).filter(([dx,dy])=>{
-    const nx=ai.x+dx,ny=ai.y+dy;
-    return inside(nx,ny,size)&&!isOccupiedByOther(state.players,index,nx,ny);
-  });
-  if(options.length){
-    const diff=state.settings.aiDifficulty;
-    const holder=state.crownHolder!==null?state.players[state.crownHolder]:null;
-    let chosen=options[0];
-    const dist=(x,y,t)=>Math.abs(x-t.x)+Math.abs(y-t.y);
-    if(diff!=="easy" && holder){
-      const toward=options.find(([dx,dy])=>dist(ai.x+dx,ai.y+dy,holder)<dist(ai.x,ai.y,holder));
-      if(toward) chosen=toward;
-    }
-    if(diff==="hard" && holder && dist(ai.x,ai.y,holder)===1) chosen=options[0];
-    if(diff==="hard" && !ai.shield){
-      const defense=options.find(([dx,dy])=>getTile(ai.x+dx,ai.y+dy,state.settings)==="defense");
-      if(defense) chosen=defense;
-    }
-    ai.x+=chosen[0]; ai.y+=chosen[1];
-    applyTileEffect(state,ai); checkCrown(state,ai);
-  }
+  const ai=state.players[index], chosen=chooseAiMove(state,index);
+  if(chosen){ ai.x+=chosen[0]; ai.y+=chosen[1]; applyTileEffect(state,ai); checkCrown(state,ai); }
   finishTurn(state); renderGame(state);
-  if(!isGameFinished(state)){ if(state.currentPlayer===0) toast("당신의 턴!"); else setTimeout(aiTurn,450); }
-  else finishGame(state);
+  if(isGameFinished(state)){ finishGame(state); return; }
+  if(state.currentPlayer===0) toast("당신의 턴!");
+  else aiTimer=setTimeout(aiTurn,450);
 }
-
+window.startTutorial = ()=>{
+  if(mode==="battle"){toast("방에서 나간 뒤 튜토리얼을 시작해주세요.");return;}
+  window.startSolo();
+  tutorialStep=0;
+  soloState.settings=normalizeSettings({bonus:false,trap:false,teleport:false,defense:false});
+  soloState.maxActions=30;
+  soloState.gameMode='score';
+  soloState.players.forEach((p,i)=>{p.x=[1,4,4,0][i];p.y=[2,4,0,4][i];});
+  soloState.crownX=2;soloState.crownY=2;
+  showTutorialHint();renderGame(soloState);
+};
+function showTutorialHint(){
+  const el=document.getElementById('tutorialHint');
+  el.classList.remove('hidden');
+  el.textContent=["① 오른쪽 중앙의 👑 칸으로 한 칸 이동해 왕관을 획득하세요.","② 왕관 보유자의 왼쪽 칸으로 이동해 왕관을 탈취하세요.","③ 상대는 방어막이 있습니다. 옆으로 이동해 방어막을 소모시키세요."][tutorialStep];
+}
+function advanceTutorial(){
+  tutorialStep++;
+  if(tutorialStep>=3){
+    toast('🎓 튜토리얼 완료! 이제 Solo 또는 Battle을 시작해보세요.');
+    cleanupRoom();soloState=null;showScreen('menuScreen');return;
+  }
+  const state=soloState;
+  state.currentPlayer=0;state.crownHolder=1;
+  state.players[0].x=1;state.players[0].y=2;
+  state.players[1].x=3;state.players[1].y=2;
+  state.players[1].shield=tutorialStep===2;
+  showTutorialHint();renderGame(state);
+}
 
 /* =========================
    FINISH TURN
@@ -1503,7 +1607,7 @@ function applyTileEffect(state,player){
           p.y===player.y)
       );
 
-    if(target){
+    if(target && !isOccupiedByOther(state.players,state.players.indexOf(player),target.x,target.y)){
 
       player.x=target.x;
       player.y=target.y;
@@ -1528,7 +1632,7 @@ function inside(x,y,size=SIZE){
 function isOccupiedByOther(players,index,x,y){
 
   return players.some((p,i)=>
-    i!==index &&
+    i!==index && !p.left &&
     p.x===x &&
     p.y===y
   );
@@ -1657,7 +1761,7 @@ function renderBoard(state){
 
       state.players.forEach((p,i)=>{
 
-        if(p.x===x && p.y===y){
+        if(!p.left && p.x===x && p.y===y){
 
           const piece =
             document.createElement("div");
@@ -1756,7 +1860,7 @@ function renderScores(state){
     score.className="score";
 
     score.textContent =
-      `${p.score}점 · ${Number(p.actions || 0)}/${MAX_ACTIONS_PER_PLAYER}`;
+      `${p.score}점 · ${Number(p.actions || 0)}/${state.maxActions}`;
 
     if(state.crownHolder===i){ score.textContent += " 👑"; }
     if(p.shield){ score.textContent += " 🛡️"; }
@@ -1841,14 +1945,14 @@ function finishGame(state){
 
   showScreen("resultScreen");
 
-  const sorted = [...state.players].sort((a,b)=>b.score-a.score);
+  const sorted = state.players.filter(p=>!p.left).sort((a,b)=>b.score-a.score);
   let winner = null;
   if(state.gameMode === "steal"){
     winner = state.crownHolder !== null ? state.players[state.crownHolder] : null;
     document.getElementById("winnerText").textContent = winner ? `👑 ${winner.name} 승리! 마지막 왕관 보유자입니다.` : `🤝 왕관 보유자가 없어 무승부입니다.`;
   }else{
-    winner=sorted[0];
-    document.getElementById("winnerText").textContent = `🏆 ${winner.name} 승리!`;
+    const winners=sorted.filter(p=>p.score===sorted[0]?.score);
+    document.getElementById("winnerText").textContent = `🏆 ${winners.map(p=>p.name).join(", ")} ${winners.length>1 ? "공동 승리" : "승리"}!`;
   }
 
   const list =
@@ -1895,139 +1999,46 @@ function playerId(){
 }
 
 
-window.createRoom = async () => {
-
-  const name =
-    document.getElementById("battleName")
-      .value.trim() || "Player";
-
-  mode="battle";
-  lastCrownSnapshot = null;
-
-  localPlayerId=playerId();
-  isHost=true;
-  roomCode=randomCode();
-
-  const settings=readBattleSettings();
-  const positions=startingPositions(4,settings.boardSize);
-
-  const players={};
-
-  players[localPlayerId]={
-    id:localPlayerId,
-    name:name,
-    index:0,
-    x:positions[0].x,
-    y:positions[0].y,
-    score:0,
-    actions:0,
-    shield:false
-  };
-
-  const room={
-    host:localPlayerId,
-    started:false,
-    gameMode:battleGameMode,
-    settings,
-    maxActions:settings.maxActions,
-    turn:0,
-    currentPlayer:0,
-    crownHolder:null,
-    crownX:Math.floor((settings.boardSize-1)/2),
-    crownY:Math.floor((settings.boardSize-1)/2),
-    players
-  };
-
-  await set(
-    ref(db,`gcrown/rooms/${roomCode}`),
-    room
-  );
-
-  listenRoom();
-
-  showLobby();
-
-};
-
-
-window.joinRoom = async () => {
-
-  const name =
-    document.getElementById("battleName")
-      .value.trim() || "Player";
-
-  const code =
-    document.getElementById("joinCode")
-      .value.trim();
-
-  if(!/^\d{4}$/.test(code)){
-
-    toast("4자리 방 코드를 입력하세요.");
-    return;
-
+async function roomAction(action){
+  if(busy || !requireOnline()) return;
+  busy=true;
+  try { await action(); } catch(error){reportError(error);} finally {busy=false;}
+}
+window.createRoom = ()=>roomAction(async()=>{
+  const name=document.getElementById("battleName").value.trim().slice(0,12)||"Player";
+  const id=playerId(), settings=readBattleSettings();
+  const pos=startingPositions(4,settings.boardSize)[0];
+  const room={host:id,started:false,gameMode:battleGameMode,settings,maxActions:settings.maxActions,
+    turn:0,currentPlayer:0,crownHolder:null,crownX:Math.floor((settings.boardSize-1)/2),crownY:Math.floor((settings.boardSize-1)/2),
+    players:{[id]:{id,name,index:0,...pos,score:0,actions:0,shield:false}}};
+  for(let attempt=0;attempt<20;attempt++){
+    const code=randomCode();
+    const result=await runTransaction(ref(db,`gcrown/rooms/${code}`),value=>value ? undefined : room,{applyLocally:false});
+    if(!result.committed) continue;
+    cleanupRoom();mode="battle";roomCode=code;localPlayerId=id;isHost=true;
+    saveSession();showLobby();listenRoom();return;
   }
-
-  const roomRef =
-    ref(db,`gcrown/rooms/${code}`);
-
-  const snap=await get(roomRef);
-
-  if(!snap.exists()){
-
-    toast("방을 찾을 수 없습니다.");
-    return;
-
-  }
-
-  const room=snap.val();
-
-  if(room.started){
-
-    toast("이미 시작된 게임입니다.");
-    return;
-
-  }
-
-  const currentPlayers =
-    Object.values(room.players || {});
-
-  if(currentPlayers.length>=4){
-
-    toast("방이 가득 찼습니다.");
-    return;
-
-  }
-
-  mode="battle";
-  lastCrownSnapshot = null;
-  roomCode=code;
-  localPlayerId=playerId();
-  isHost=false;
-
-  const index=currentPlayers.length;
-
-  const pos=startingPositions(4,normalizeSettings(room.settings).boardSize)[index];
-
-  await update(
-    ref(db,`gcrown/rooms/${code}/players/${localPlayerId}`),
-    {
-      id:localPlayerId,
-      name:name,
-      index:index,
-      x:pos.x,
-      y:pos.y,
-      score:0,
-      actions:0,
-      shield:false
-    }
-  );
-
-  listenRoom();
-
-  showLobby();
-
-};
-
+  toast("방 코드를 생성하지 못했습니다. 다시 시도해주세요.");
+});
+window.joinRoom = ()=>roomAction(async()=>{
+  const code=document.getElementById("joinCode").value.trim();
+  if(!/^\d{4}$/.test(code)){toast("4자리 방 코드를 입력하세요.");return;}
+  const name=document.getElementById("battleName").value.trim().slice(0,12)||"Player", id=playerId();
+  const initial=await get(ref(db,`gcrown/rooms/${code}`));
+  if(!initial.exists()){toast("방을 찾을 수 없습니다.");return;}
+  let reason="방을 찾을 수 없습니다.";
+  const result=await runTransaction(ref(db,`gcrown/rooms/${code}`),room=>{
+    if(!room) return;
+    if(room.started){reason="이미 시작된 게임입니다.";return;}
+    const players=Object.values(room.players||{});
+    if(players.length>=4){reason="방이 가득 찼습니다.";return;}
+    const index=players.length,pos=startingPositions(4,normalizeSettings(room.settings).boardSize)[index];
+    room.players[id]={id,name,index,...pos,score:0,actions:0,shield:false};return room;
+  },{applyLocally:false});
+  if(!result.committed){toast(reason);return;}
+  cleanupRoom();mode="battle";roomCode=code;localPlayerId=id;isHost=false;
+  saveSession();showLobby();listenRoom();
+});
 
 /* =========================
    LOBBY
@@ -2065,7 +2076,11 @@ function listenRoom(){
         }
 
         const room=snap.val();
-
+        if(!room.players?.[localPlayerId] || room.players[localPlayerId].left){
+          cleanupRoom();showScreen("menuScreen");return;
+        }
+        isHost=room.host===localPlayerId;
+        connectionStatus("🟢 방 동기화 정상");
         if(!room.started){
 
           renderLobby(room);
@@ -2078,6 +2093,7 @@ function listenRoom(){
           const state =
             normalizeBattleState(room);
 
+          currentBattleState=state;
           renderGame(state);
 
           if(isGameFinished(state)){
@@ -2086,7 +2102,8 @@ function listenRoom(){
 
         }
 
-      }
+      },
+      reportError
     );
 
 }
@@ -2105,6 +2122,8 @@ function normalizeBattleState(room){
 
   return {
     ...room,
+    crownHolder:room.crownHolder ?? null,
+    gameMode:room.gameMode || "score",
     settings:normalizeSettings(room.settings),
     maxActions:Number(room.maxActions || normalizeSettings(room.settings).maxActions),
     players
@@ -2172,51 +2191,19 @@ function updateLobbyButtons(){
 }
 
 
-window.startBattle = async () => {
-
-  if(!isHost) return;
-
-  const snap =
-    await get(
-      ref(db,`gcrown/rooms/${roomCode}`)
-    );
-
-  if(!snap.exists()) return;
-
-  const room=snap.val();
-
-  const players =
-    Object.values(room.players || {});
-
-  if(players.length<2){
-
-    toast("최소 2명이 필요합니다.");
-    return;
-
-  }
-
-  const playerUpdates = {};
-  players.forEach(p=>{
-    playerUpdates[`players/${p.id}/actions`] = 0;
-    playerUpdates[`players/${p.id}/shield`] = false;
-  });
-
-  await update(
-    ref(db,`gcrown/rooms/${roomCode}`),
-    {
-      started:true,
-      turn:0,
-      currentPlayer:0,
-      crownHolder:null,
-      finished:false,
-      crownX:Math.floor((normalizeSettings(room.settings).boardSize-1)/2),
-      crownY:Math.floor((normalizeSettings(room.settings).boardSize-1)/2),
-      ...playerUpdates
-    }
-  );
-
-};
-
+window.startBattle = ()=>roomAction(async()=>{
+  const result=await runTransaction(ref(db,`gcrown/rooms/${roomCode}`),room=>{
+    if(!room || room.host!==localPlayerId || room.started) return;
+    const players=Object.values(room.players||{}).sort((a,b)=>a.index-b.index);
+    if(players.length<2) return;
+    const cfg=normalizeSettings(room.settings),positions=startingPositions(players.length,cfg.boardSize);
+    players.forEach((p,i)=>{Object.assign(p,positions[i],{index:i,score:0,actions:0,shield:false,left:false});room.players[p.id]=p;});
+    Object.assign(room,{started:true,turn:0,currentPlayer:0,crownHolder:null,finished:false,
+      crownX:Math.floor((cfg.boardSize-1)/2),crownY:Math.floor((cfg.boardSize-1)/2)});
+    return room;
+  },{applyLocally:false});
+  if(!result.committed) toast("방장만 시작할 수 있으며 최소 2명이 필요합니다.");
+});
 
 window.copyRoomCode = async () => {
 
@@ -2240,7 +2227,11 @@ window.copyRoomCode = async () => {
    BATTLE MOVE
 ========================= */
 
-async function battleMove(dx,dy){
+async function battleMove(dx,dy,pass=false){
+  if(movePending || !roomCode || !requireOnline()) return;
+  movePending=true;
+  const expectedTurn=currentBattleState?.turn;
+  try {
 
   const roomRef =
     ref(db,`gcrown/rooms/${roomCode}`);
@@ -2249,9 +2240,9 @@ async function battleMove(dx,dy){
     roomRef,
     room=>{
 
-      if(!room || !room.started || room.finished){
-        return room;
-      }
+      if(!room || !room.started || room.finished || room.turn!==expectedTurn) return;
+      room.crownHolder=room.crownHolder ?? null;
+      room.gameMode=room.gameMode || "score";
 
       const players =
         Object.values(room.players || {})
@@ -2262,45 +2253,45 @@ async function battleMove(dx,dy){
           p=>p.id===localPlayerId
         );
 
-      if(!me) return room;
+      if(!me) return;
 
       if(me.index!==room.currentPlayer){
-        return room;
+        return;
       }
 
       const settings=normalizeSettings(room.settings);
       const maxActions=settings.maxActions;
 
       if(Number(me.actions || 0) >= maxActions){
-        return room;
+        return;
       }
 
-      if(dx===0 && dy===0){
-        return room;
-      }
+      if(pass){
+        if(legalMoves(normalizeBattleState(room),me.index).length) return;
+      }else if(!Number.isInteger(dx) || !Number.isInteger(dy) || Math.abs(dx)+Math.abs(dy)!==1){ return; }
 
       const nx=me.x+dx;
       const ny=me.y+dy;
 
-      if(!inside(nx,ny)){
-        return room;
+      if(!inside(nx,ny,settings.boardSize)){
+        return;
       }
 
       const occupied =
         players.some(p=>
-          p.id!==me.id &&
+          p.id!==me.id && !p.left &&
           p.x===nx &&
           p.y===ny
         );
 
       if(occupied){
-        return room;
+        return;
       }
 
       me.x=nx;
       me.y=ny;
 
-      const type=getTile(nx,ny,settings);
+      const type=pass ? "normal" : getTile(nx,ny,settings);
 
       if(type==="bonus"){
         me.score+=2;
@@ -2314,7 +2305,7 @@ async function battleMove(dx,dy){
         me.shield = true;
       }
 
-      if(type==="teleport"){
+      if(type==="teleport" && !players.some(p=>p.id!==me.id && !p.left && p.x===settings.boardSize-1-nx && p.y===settings.boardSize-1-ny)){
 
         const c=settings.boardSize-1;
         if(nx===0 && ny===c){
@@ -2330,7 +2321,7 @@ async function battleMove(dx,dy){
         왕관 획득
       */
 
-      if(
+      if(!pass &&
         me.x===room.crownX &&
         me.y===room.crownY &&
         (
@@ -2347,7 +2338,7 @@ async function battleMove(dx,dy){
         왕관 보유자 인접 시 탈취
       */
 
-      if(
+      if(!pass &&
         room.crownHolder!==null &&
         room.crownHolder!==me.index
       ){
@@ -2418,9 +2409,10 @@ async function battleMove(dx,dy){
 
       return room;
 
-    }
+    },
+    {applyLocally:false}
   );
-
+  } catch(error){reportError(error);} finally {movePending=false;}
 }
 
 
@@ -2435,7 +2427,7 @@ function localPlayerIndex(state){
       p=>p.id===localPlayerId
     );
 
-  return p ? p.index : 0;
+  return p ? p.index : -1;
 
 }
 
@@ -2444,31 +2436,36 @@ function localPlayerIndex(state){
    LEAVE
 ========================= */
 
-window.leaveRoom = async () => {
-
+window.leaveRoom = async ()=>{
+  if(busy) return;
   if(roomCode && localPlayerId){
-
-    try{
-
-      await update(
-        ref(
-          db,
-          `gcrown/rooms/${roomCode}/players/${localPlayerId}`
-        ),
-        {
-          left:true
+    if(!requireOnline()) return;
+    busy=true;
+    try {
+      const id=localPlayerId;
+      await runTransaction(ref(db,`gcrown/rooms/${roomCode}`),room=>{
+        if(!room?.players?.[id]) return;
+        if(!room.started){
+          delete room.players[id];
+          const players=Object.values(room.players).sort((a,b)=>a.index-b.index);
+          if(!players.length) return null;
+          players.forEach((p,i)=>p.index=i);
+          if(room.host===id) room.host=players[0].id;
+        }else{
+          const p=room.players[id];p.left=true;p.actions=room.maxActions;
+          if(room.crownHolder===p.index){room.crownHolder=null;room.crownX=p.x;room.crownY=p.y;}
+          if(room.currentPlayer===p.index){
+            const next=Object.values(room.players).filter(p=>!p.left && p.actions<room.maxActions).sort((a,b)=>a.index-b.index);
+            room.currentPlayer=(next.find(p=>p.index>room.currentPlayer)||next[0])?.index ?? 0;
+          }
+          room.finished=Object.values(room.players).every(p=>p.actions>=room.maxActions);
         }
-      );
-
-    }catch{}
-
+        return room;
+      },{applyLocally:false});
+    } catch(error){ reportError(error);return; } finally {busy=false;}
   }
-
-  cleanupRoom();
-  showScreen("menuScreen");
-
+  cleanupRoom();soloState=null;showScreen("menuScreen");
 };
-
 
 window.exitGame = () => {
 
@@ -2478,9 +2475,8 @@ window.exitGame = () => {
 
   }else{
 
+    cleanupRoom();
     soloState=null;
-    mode=null;
-    lastCrownSnapshot=null;
     showScreen("menuScreen");
 
   }
@@ -2503,7 +2499,18 @@ function escapeHtml(text){
 
 }
 
+window.passTurn = ()=>{
+  const state=mode==='solo'?soloState:currentBattleState;
+  const index=mode==='solo'?0:state?localPlayerIndex(state):-1;
+  if(!state || index<0 || state.currentPlayer!==index || isGameFinished(state)) return;
+  if(legalMoves(state,index).length){toast('이동할 수 있는 칸이 있습니다.');return;}
+  if(mode==='battle'){battleMove(0,0,true);return;}
+  finishTurn(state);renderGame(state);
+  if(isGameFinished(state)) finishGame(state);else aiTimer=setTimeout(aiTurn,450);
+};
+initFirebase();
 </script>
 
 </body>
 </html>
+
