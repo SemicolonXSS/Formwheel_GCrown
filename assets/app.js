@@ -159,6 +159,7 @@ window.backMenu = () => {
 function cleanupRoom(){
   clearTimeout(aiTimer);
   tutorialStep = -1;
+  document.body.classList.remove("tutorialMode");
   document.getElementById("tutorialBar").hidden=true;
   document.querySelectorAll(".tutorialTarget").forEach(el=>el.classList.remove("tutorialTarget"));
   mode = null;
@@ -480,7 +481,7 @@ const tutorialLessons=[
 ];
 window.startTutorial = ()=>{
   if(mode && tutorialStep<0){toast("진행 중인 게임에서 나간 뒤 튜토리얼을 열어주세요.");return;}
-  cleanupRoom();mode="solo";tutorialStep=0;loadTutorialStep();
+  cleanupRoom();mode="solo";tutorialStep=0;document.body.classList.add("tutorialMode");loadTutorialStep();
   document.getElementById('tutorialBar').scrollIntoView({block:'start',behavior:'smooth'});
 };
 function loadTutorialStep(){
