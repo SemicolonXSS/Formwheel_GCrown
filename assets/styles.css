@@ -672,3 +672,9 @@ input:focus{
     font-size:23px;
   }
 }
+
+
+/* Cook-style guide alongside the real board and controls. */
+.tutorialBar{position:sticky;top:76px;z-index:19;margin:14px 0;padding:16px 18px;border:2px solid #c4b5fd;border-radius:16px;background:#faf8ff;box-shadow:0 6px 24px #5b21b610;color:#30204b}
+.tutorialBar[hidden]{display:none!important}.tutorialBar h2{margin:0 0 6px;font-size:18px;letter-spacing:0}.tutorialBar p{margin:6px 0;line-height:1.65;font-size:14px}.tutorialBar .tutorialNote{font-size:12px;color:#756781}.tutorialBar #tutorialStatus{color:#5b21b6;font-weight:700}.tutorialActions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.tutorialActions button,.tutorialLaunch{width:auto;margin:0;min-height:40px;padding:8px 14px;border:1px solid #d5c9ef;border-radius:10px;background:#fff;color:#5b21b6;font-weight:800}.tutorialActions button:disabled{opacity:.4}.tutorialActions #tutorialNext{background:#7c3aed;color:#fff}.tutorialTarget{outline:3px solid #a78bfa!important;outline-offset:4px!important}.tutorialLaunch{margin-left:auto;font-size:14px}
+@media(max-width:600px){.tutorialBar{position:relative;top:auto;padding:13px}.tutorialBar h2{font-size:16px}.tutorialLaunch{padding:8px 10px;font-size:12px}}

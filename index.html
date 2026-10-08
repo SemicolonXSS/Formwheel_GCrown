@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#f7f8fc">
 <title>FormWheel GCrown</title>
 
-<link rel="stylesheet" href="./assets/styles.css">
+<link rel="stylesheet" href="./assets/styles.css?v=tutorial-real-board-20261008">
 <link rel="stylesheet" href="https://semicolonxss.github.io/Formwheel/shared/formwheel-ui.css">
 <script defer src="https://semicolonxss.github.io/Formwheel/shared/formwheel-ui.js"></script>
 <link rel="icon" type="image/svg+xml" href="./assets/icon.svg">
@@ -21,7 +21,7 @@
   <a class="logo" href="https://semicolonxss.github.io/Formwheel/">
     Form<span>◉</span>Wheel
   </a>
-  <div class="header-title">GCrown</div>
+  <div class="header-title">GCrown</div><button class="tutorialLaunch" type="button" onclick="startTutorial()">🎓 튜토리얼</button>
 </header>
 
 <main class="wrap">
@@ -34,7 +34,12 @@
     <p>Solo는 AI 3명과 플레이합니다. 쉬움은 무작위 이동, 보통은 왕관 추적, 어려움은 탈취·회피·타일 효과를 함께 고려합니다. Battle은 2~4명이며 방장이 시작합니다.</p>
     <button class="secondary" onclick="startTutorial()">🎓 직접 해보는 튜토리얼</button>
   </details>
-  <div id="tutorialHint" class="info hidden" style="margin-top:14px" role="status"></div>
+  <section id="tutorialBar" class="tutorialBar" hidden aria-label="게임 튜토리얼">
+  <h2 id="tutorialTitle"></h2><p id="tutorialText" aria-live="polite"></p>
+  <p class="tutorialNote">각 단계는 새 연습 상황으로 시작해요. 실제 판과 게임 버튼으로 해본 뒤 다음을 눌러주세요.</p>
+  <p id="tutorialStatus" role="status"></p>
+  <div class="tutorialActions"><button id="tutorialBack" type="button">이전</button><button id="tutorialNext" type="button">다음</button><button id="tutorialEnd" type="button">닫기</button></div>
+</section>
 
   <!-- MENU -->
   <section id="menuScreen" class="screen active">
@@ -295,10 +300,11 @@
 <div id="crownStealBanner" class="crown-steal-banner">⚔️ 왕관 탈취!</div>
 
 
-<script type="module" src="./assets/app.js"></script>
+<script type="module" src="./assets/app.js?v=tutorial-real-board-20261008"></script>
 
 </body>
 </html>
+
 
 
 

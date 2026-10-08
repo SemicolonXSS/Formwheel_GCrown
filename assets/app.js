@@ -159,7 +159,8 @@ window.backMenu = () => {
 function cleanupRoom(){
   clearTimeout(aiTimer);
   tutorialStep = -1;
-  document.getElementById("tutorialHint").classList.add("hidden");
+  document.getElementById("tutorialBar").hidden=true;
+  document.querySelectorAll(".tutorialTarget").forEach(el=>el.classList.remove("tutorialTarget"));
   mode = null;
   currentBattleState = null;
   try { sessionStorage.removeItem("gcrownSession"); } catch {}
@@ -368,7 +369,6 @@ function soloMove(dx,dy){
 
   const state = soloState;
   if(!state || isGameFinished(state)) return;
-  if(tutorialStep>=0 && (dx!==1 || dy!==0)){toast("튜토리얼 안내에 따라 오른쪽으로 한 칸 이동하세요.");return;}
   const player = state.players[0];
 
   if(state.currentPlayer!==0){
@@ -403,8 +403,8 @@ function soloMove(dx,dy){
 
   finishTurn(state);
 
+  if(tutorialStep >= 0){ state.currentPlayer=0; renderGame(state); showTutorialHint(true); return; }
   renderGame(state);
-  if(tutorialStep >= 0){ advanceTutorial(); return; }
 
   if(!isGameFinished(state)){
 
@@ -470,35 +470,54 @@ function aiTurn(){
   if(state.currentPlayer===0) toast("당신의 턴!");
   else aiTimer=setTimeout(aiTurn,450);
 }
+const tutorialLessons=[
+  ["왕관 획득", "파란 말 오른쪽의 👑 칸을 누르거나 → 버튼을 눌러 한 칸 이동하세요. 왕관을 얻고 턴을 마치면 점수 모드에서 +1점이에요.", "#board [data-x='2'][data-y='2']"],
+  ["왕관 탈취", "빨간 말이 왕관을 가지고 있어요. 오른쪽 빈 칸으로 이동해 빨간 말의 바로 왼쪽에 붙어보세요. 같은 칸에 들어가는 것이 아니라 상하좌우로 붙으면 탈취해요.", "#board [data-x='2'][data-y='2']"],
+  ["상대 방어막", "빨간 말의 🛡️는 탈취를 한 번 막아요. 오른쪽으로 붙어 방어막을 소모시킨 뒤 왼쪽으로 나왔다가 다시 오른쪽으로 붙어보세요.", "#board [data-x='2'][data-y='2']"],
+  ["방어 타일", "파란 말 왼쪽의 🛡️ 타일을 눌러 방어막을 얻어보세요. 방어막을 가진 왕관 보유자는 다음 탈취를 한 번 막아요.", "#board [data-x='0'][data-y='2']"],
+  ["보너스와 함정", "파란 말 오른쪽의 💰 타일로 이동해 +2점을 받아보세요. 🕳️는 −1점(최소 0점), 🌀는 반대 포털의 빈 칸으로 이동시켜요.", "#board [data-x='2'][data-y='0']"],
+  ["실전 준비", "이제 판에서 자유롭게 움직여보세요. 실전에서는 이동 후 다음 사람의 차례가 됩니다. 점수 모드는 최종 점수, 탈취 모드는 마지막 왕관 보유자로 승패를 정해요. 연습을 마치면 완료를 누르세요.", "#statusInfo"]
+];
 window.startTutorial = ()=>{
-  if(mode==="battle"){toast("방에서 나간 뒤 튜토리얼을 시작해주세요.");return;}
-  window.startSolo();
-  tutorialStep=0;
-  soloState.settings=normalizeSettings({bonus:false,trap:false,teleport:false,defense:false});
-  soloState.maxActions=30;
-  soloState.gameMode='score';
-  soloState.players.forEach((p,i)=>{p.x=[1,4,4,0][i];p.y=[2,4,0,4][i];});
-  soloState.crownX=2;soloState.crownY=2;
-  showTutorialHint();renderGame(soloState);
+  if(mode && tutorialStep<0){toast("진행 중인 게임에서 나간 뒤 튜토리얼을 열어주세요.");return;}
+  cleanupRoom();mode="solo";tutorialStep=0;loadTutorialStep();
+  document.getElementById('tutorialBar').scrollIntoView({block:'start',behavior:'smooth'});
 };
-function showTutorialHint(){
-  const el=document.getElementById('tutorialHint');
-  el.classList.remove('hidden');
-  el.textContent=["① 오른쪽 중앙의 👑 칸으로 한 칸 이동해 왕관을 획득하세요.","② 왕관 보유자의 왼쪽 칸으로 이동해 왕관을 탈취하세요.","③ 상대는 방어막이 있습니다. 옆으로 이동해 방어막을 소모시키세요."][tutorialStep];
+function loadTutorialStep(){
+  clearTimeout(aiTimer);lastCrownSnapshot=null;
+  const settings=normalizeSettings({boardSize:5,bonus:tutorialStep>=3,trap:tutorialStep>=3,teleport:tutorialStep>=3,defense:tutorialStep>=3});
+  soloState={started:true,turn:0,maxActions:30,settings,gameMode:'score',currentPlayer:0,crownHolder:null,crownX:2,crownY:2,
+    players:[{id:'p0',name:'나 · 연습',x:1,y:2},{id:'p1',name:'상대 · 연습',x:4,y:4},{id:'p2',name:'초록 말',x:4,y:0},{id:'p3',name:'보라 말',x:0,y:4}].map(p=>({...p,score:0,actions:0,shield:false,alive:true}))};
+  if(tutorialStep===1||tutorialStep===2){soloState.crownHolder=1;soloState.players[1].x=3;soloState.players[1].y=2;soloState.players[1].shield=tutorialStep===2;}
+  if(tutorialStep===4){soloState.players[0].x=1;soloState.players[0].y=0;}
+  if(tutorialStep===5){soloState.players[0].x=0;soloState.players[0].y=0;}
+  showScreen('gameScreen');renderGame(soloState);showTutorialHint();
 }
-function advanceTutorial(){
-  tutorialStep++;
-  if(tutorialStep>=3){
-    toast('🎓 튜토리얼 완료! 이제 Solo 또는 Battle을 시작해보세요.');
-    cleanupRoom();soloState=null;showScreen('menuScreen');return;
+function showTutorialHint(moved=false){
+  if(tutorialStep<0)return;
+  const lesson=tutorialLessons[tutorialStep],p=soloState.players[0];
+  document.getElementById('tutorialBar').hidden=false;
+  document.getElementById('tutorialTitle').textContent=(tutorialStep+1)+' / '+tutorialLessons.length+' · '+lesson[0];
+  document.getElementById('tutorialText').textContent=lesson[1];
+  document.getElementById('tutorialBack').disabled=tutorialStep===0;
+  document.getElementById('tutorialNext').textContent=tutorialStep===tutorialLessons.length-1?'완료':'다음';
+  let outcome='';
+  if(moved){
+    outcome='한 칸 이동했어요. 판과 점수를 확인한 뒤 다음을 눌러주세요.';
+    if(tutorialStep<=1&&soloState.crownHolder===0)outcome='👑 왕관을 얻었어요! 점수 '+p.score+'점 · 결과를 보고 다음으로 넘어가세요.';
+    if(tutorialStep===2)outcome=soloState.crownHolder===0?'⚔️ 방어막이 사라진 뒤 왕관을 탈취했어요!':!soloState.players[1].shield?'🛡️ 방어막이 탈취를 막고 사라졌어요. 왼쪽으로 나왔다가 다시 붙어보세요.':'오른쪽으로 이동해 상대에게 붙어보세요.';
+    if(tutorialStep===3&&p.shield)outcome='🛡️ 내 방어막을 얻었어요! 현재 상태와 점수 목록에서 확인하세요.';
+    if(tutorialStep===4&&p.score>=2)outcome='💰 보너스 +2점! 점수 목록에 반영됐어요.';
   }
-  const state=soloState;
-  state.currentPlayer=0;state.crownHolder=1;
-  state.players[0].x=1;state.players[0].y=2;
-  state.players[1].x=3;state.players[1].y=2;
-  state.players[1].shield=tutorialStep===2;
-  showTutorialHint();renderGame(state);
+  document.getElementById('tutorialStatus').textContent=outcome;
+  document.querySelectorAll('.tutorialTarget').forEach(el=>el.classList.remove('tutorialTarget'));
+  document.querySelector(lesson[2])?.classList.add('tutorialTarget');
 }
+window.endTutorial=()=>{cleanupRoom();soloState=null;showScreen('menuScreen');};
+document.getElementById('tutorialBack').onclick=()=>{if(tutorialStep>0){tutorialStep--;loadTutorialStep();}};
+document.getElementById('tutorialNext').onclick=()=>{if(tutorialStep===tutorialLessons.length-1)window.endTutorial();else if(tutorialStep>=0){tutorialStep++;loadTutorialStep();}};
+document.getElementById('tutorialEnd').onclick=window.endTutorial;
+document.addEventListener('keydown',event=>{if(tutorialStep>=0&&event.key==='Escape')window.endTutorial();});
 
 /* =========================
    FINISH TURN
@@ -804,7 +823,8 @@ function renderBoard(state){
           piece.className=`piece p${i}`;
 
           piece.textContent =
-            COLORS[i];
+            COLORS[i]+(p.shield?"🛡️":"");
+          piece.title=p.name+(p.shield?" · 방어막":"");
 
           cell.appendChild(piece);
 
@@ -1548,3 +1568,4 @@ window.passTurn = ()=>{
   if(isGameFinished(state)) finishGame(state);else aiTimer=setTimeout(aiTurn,450);
 };
 initFirebase();
+
