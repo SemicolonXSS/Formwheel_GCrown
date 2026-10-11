@@ -1000,6 +1000,7 @@ function finishGame(state){
   if(document.getElementById("resultScreen").classList.contains("active")) return;
 
   showScreen("resultScreen");
+  window.dispatchEvent(new CustomEvent("fw:4050:complete",{detail:{gameId:"gcrown"}}));
 
   const sorted = state.players.filter(p=>!p.left).sort((a,b)=>b.score-a.score);
   let winner = null;
