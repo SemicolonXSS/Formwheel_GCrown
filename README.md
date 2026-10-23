@@ -52,3 +52,17 @@ node tests/regression.test.cjs
 - 멀티플레이
 
 > 구체적인 지원 모드와 버튼 이름은 배포 버전에 따라 달라질 수 있습니다.
+
+<!-- FORMWHEEL-README-2026 -->
+## 🎡 Formwheel 프로젝트 안내
+
+**Formwheel GCrown**은(는) Formwheel 플랫폼의 전략 보드게임 프로젝트입니다.
+
+- **[프로젝트 실행하기](https://semicolonxss.github.io/Formwheel_GCrown/)** · **[Formwheel Hub](https://semicolonxss.github.io/Formwheel/)**
+- **[개발 현황](https://semicolonxss.github.io/Formwheel_Check/)** · **[개선점 보내기](https://semicolonxss.github.io/Formwheel/feedback.html)**
+
+### 이용 및 개발 참고
+
+프로젝트별 기능과 로그인·실시간 동기화 지원 범위는 다를 수 있습니다. 브라우저 및 모바일에서 동작을 확인하고, 문제가 있다면 재현 단계와 기기 정보를 함께 제보해 주세요. Firebase 설정 및 데이터베이스 보안 규칙은 웹 코드 배포와 별도로 관리됩니다.
+
+Formwheel은 게임·창작·협업 도구를 연결하는 웹 프로젝트 플랫폼입니다. © Formwheel contributors.
