@@ -999,7 +999,7 @@ function finishGame(state){
 
   if(document.getElementById("resultScreen").classList.contains("active")) return;
 
-  if(state.mode!=="online" && window.opener && !window.opener.closed)window.opener.postMessage({type:"formwheel-spotlight-result-v1",project:"GCrown",value:1},"https://semicolonxss.github.io");
+  if(mode==="solo" && window.opener && !window.opener.closed)window.opener.postMessage({type:"formwheel-spotlight-result-v1",project:"GCrown",value:1},"https://semicolonxss.github.io");
   showScreen("resultScreen");
   window.dispatchEvent(new CustomEvent("fw:4050:complete",{detail:{gameId:"gcrown"}}));
 
