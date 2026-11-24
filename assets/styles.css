@@ -65,7 +65,7 @@ button{
 
 .header-title{
   font-size:14px;
-  color:#777b87;
+  color:#626876;
   font-weight:700;
 }
 
@@ -95,7 +95,7 @@ button{
 
 .hero p{
   margin:12px 0 0;
-  color:#747985;
+  color:#626876;
   font-size:15px;
 }
 
@@ -142,7 +142,7 @@ button{
 
 .mode-card p{
   margin:0;
-  color:#777b87;
+  color:#626876;
   line-height:1.5;
   font-size:14px;
 }
@@ -267,7 +267,7 @@ input:focus{
 }
 
 .turn-number{
-  color:#777b87;
+  color:#626876;
   font-size:14px;
 }
 
@@ -332,7 +332,7 @@ input:focus{
   left:5px;
   font-size:9px;
   font-weight:800;
-  color:#8a8e99;
+  color:#626876;
 }
 
 .piece{
@@ -405,7 +405,7 @@ input:focus{
 .action-title{
   font-size:13px;
   font-weight:900;
-  color:#777b87;
+  color:#626876;
   margin-bottom:10px;
 }
 
@@ -434,7 +434,7 @@ input:focus{
 .mode-option{flex:1;min-width:150px;border:1px solid #dfe1e8;background:#fff;border-radius:14px;padding:14px;cursor:pointer;text-align:left;}
 .mode-option.selected{border:2px solid #171923;background:#f6f7fa;}
 .mode-option strong{display:block;margin-bottom:4px;}
-.mode-option span{font-size:12px;color:#777b87;line-height:1.4;}
+.mode-option span{font-size:12px;color:#626876;line-height:1.4;}
 .mode-badge{display:inline-block;margin-top:8px;padding:5px 9px;border-radius:999px;background:#eef0f5;font-size:12px;font-weight:800;}
 .settings-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:10px 0}.setting{display:flex;flex-direction:column;gap:7px;padding:12px;border:1px solid #e1e3e9;border-radius:14px;background:#fafbfc;font-size:13px}.setting select{height:40px;border:1px solid #dfe1e8;border-radius:10px;background:white;padding:0 9px}.toggle-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin:10px 0}.toggle-grid label{padding:12px;border:1px solid #e1e3e9;border-radius:12px;background:#fff;font-weight:700;font-size:13px}.toggle-grid input{width:18px;height:18px;vertical-align:middle;margin-right:7px}@media(max-width:600px){.settings-grid{grid-template-columns:1fr}.toggle-grid{grid-template-columns:1fr}}
 .info{
@@ -618,7 +618,7 @@ input:focus{
 
 .small{
   font-size:12px;
-  color:#8a8e99;
+  color:#626876;
 }
 
 @media(max-width:800px){
@@ -682,3 +682,5 @@ input:focus{
 body.tutorialMode .boardArea{width:min(100%,560px)}
 body.tutorialMode .boardPanel{padding:10px}
 body.tutorialMode .board-card .board{width:min(100%,500px)}
+
+.mode-card:focus-visible{outline:3px solid #5545b5;outline-offset:4px}

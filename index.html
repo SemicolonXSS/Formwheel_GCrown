@@ -14,9 +14,9 @@
 <meta property="og:image" content="https://semicolonxss.github.io/Formwheel_GCrown/assets/thumbnail.svg">
 <link rel="stylesheet" href="assets/formwheel-brand.css?v=20261008-hub-logo">
 <link rel="icon" type="image/svg+xml" href="https://semicolonxss.github.io/Formwheel/assets/formwheel-favicon.svg">
-</head>
+<style>h1.game-title{font-size:22px}h1#setupTitle,h1#tutorialTitle{font-size:24px}h2{font-size:1.25rem}</style></head>
 
-<body><div role="note" style="position:relative;z-index:1;box-sizing:border-box;max-width:58rem;margin:12px auto;padding:10px 13px;border:1px solid #e3bc72;border-radius:10px;background:#fff7e9;color:#624414;font:14px/1.55 system-ui"><strong>🚧 온라인 배틀 공사 중</strong><div>방을 만들거나 참가할 수 없어요.</div></div>
+<body><aside aria-label="온라인 서비스 안내" style="position:relative;z-index:1;box-sizing:border-box;max-width:58rem;margin:12px auto;padding:10px 13px;border:1px solid #e3bc72;border-radius:10px;background:#fff7e9;color:#624414;font:14px/1.55 system-ui"><strong>🚧 온라인 배틀 공사 중</strong><div>방을 만들거나 참가할 수 없어요.</div></aside>
 
 <header class="header">
   <a class="logo fw-hub-logo" href="https://semicolonxss.github.io/Formwheel/" aria-label="FormWheel 메인으로 이동"><span class="fw-hub-form">Form</span><span class="fw-hub-icon" aria-hidden="true"></span><span class="fw-hub-wheel">Wheel</span></a>
@@ -34,7 +34,7 @@
     <button class="secondary" onclick="startTutorial()">🎓 직접 해보는 튜토리얼</button>
   </details>
   <section id="tutorialBar" class="tutorialBar" hidden aria-label="게임 튜토리얼">
-  <h2 id="tutorialTitle"></h2><p id="tutorialText" aria-live="polite"></p>
+  <h1 id="tutorialTitle"></h1><p id="tutorialText" aria-live="polite"></p>
   <p class="tutorialNote">각 단계는 새 연습 상황으로 시작해요. 실제 판과 게임 버튼으로 해본 뒤 다음을 눌러주세요.</p>
   <p id="tutorialStatus" role="status"></p>
   <div class="tutorialActions"><button id="tutorialBack" type="button">이전</button><button id="tutorialNext" type="button">다음</button><button id="tutorialEnd" type="button">닫기</button></div>
@@ -50,7 +50,7 @@
 
     <div class="menu-grid">
 
-      <div class="mode-card" onclick="showSoloSetup()">
+      <div class="mode-card" role="button" tabindex="0" onkeydown="if(!event.repeat &amp;&amp; (event.key==='Enter'||event.key===' ')){event.preventDefault();this.click()}" onclick="showSoloSetup()">
         <div class="mode-icon">🧍</div>
         <h2>Solo</h2>
         <p>
@@ -59,7 +59,7 @@
         </p>
       </div>
 
-      <div class="mode-card" onclick="showBattleSetup()">
+      <div class="mode-card" role="button" tabindex="0" onkeydown="if(!event.repeat &amp;&amp; (event.key==='Enter'||event.key===' ')){event.preventDefault();this.click()}" onclick="showBattleSetup()">
         <div class="mode-icon">👥</div>
         <h2>Battle</h2>
         <p>
@@ -79,7 +79,7 @@
     <div class="card">
       <h2 class="section-title">플레이어 설정</h2>
       <div class="form-row">
-        <input id="soloName" maxlength="12" placeholder="닉네임">
+        <input id="soloName" maxlength="12" placeholder="닉네임" aria-label="솔로 닉네임">
         <button class="primary" onclick="startSolo()">게임 시작</button>
         <button class="secondary" onclick="backMenu()">뒤로</button>
       </div>
@@ -111,7 +111,7 @@
     <div class="hero"><h1>👥 Battle</h1><p>실시간 왕관 쟁탈전을 시작하세요.</p></div>
     <div class="card">
       <h2 class="section-title">Battle 입장</h2>
-      <div class="form-row"><input id="battleName" maxlength="12" placeholder="닉네임"></div>
+      <div class="form-row"><input id="battleName" maxlength="12" placeholder="닉네임" aria-label="배틀 닉네임"></div>
       <br>
       <h2 class="section-title">게임 모드 <span class="small">방장이 선택합니다</span></h2>
       <div class="mode-select">
@@ -133,7 +133,7 @@
       <br>
       <div class="form-row">
         <button class="primary" onclick="createRoom()">방 만들기</button>
-        <input id="joinCode" maxlength="4" inputmode="numeric" placeholder="4자리 코드">
+        <input id="joinCode" maxlength="4" inputmode="numeric" placeholder="4자리 코드" aria-label="참가할 방 코드">
         <button class="secondary" onclick="joinRoom()">방 참가</button>
         <button class="secondary" onclick="backMenu()">뒤로</button>
       </div>
@@ -179,7 +179,7 @@
 
 
   <!-- GAME -->
-  <section id="gameScreen" class="screen">
+  <section aria-label="GCrown 게임" id="gameScreen" class="screen"><h1 class="game-title">GCrown 게임</h1>
 
     <div class="game-layout">
 
@@ -296,7 +296,7 @@
 
 <div id="toast" class="toast"></div>
 <div id="crownFlyLayer" class="crown-fly-layer"></div>
-<div id="crownStealBanner" class="crown-steal-banner">⚔️ 왕관 탈취!</div>
+<div role="status" id="crownStealBanner" class="crown-steal-banner">⚔️ 왕관 탈취!</div>
 
 
 <script type="module" src="./assets/app.js?v=20261024-audit1"></script>

@@ -845,6 +845,8 @@ function renderBoard(state){
 
       });
 
+      cell.setAttribute("aria-label",`${y+1}행 ${x+1}열 · ${type} · ${cell.textContent.trim() || "빈 칸"}`);
+
       cell.onclick=()=>{
 
         const meIndex =
